@@ -24,16 +24,16 @@ export function BoxTracker({ boxes, activeShift, onBoxStatusChange, selectedBoxI
   );
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 p-4">
+    <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <Package className="w-4 h-4 text-gray-400 mr-2" />
-          <h3 className="font-medium text-gray-900">Boxes</h3>
+          <h3 className="font-medium text-gray-900 text-sm sm:text-base">Boxes</h3>
         </div>
-        <span className="text-sm text-gray-500">{activeBoxes.length} active</span>
+        <span className="text-xs sm:text-sm text-gray-500">{activeBoxes.length} active</span>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-5 gap-2">
         {activeBoxes.map(box => (
           <div
             key={box.id}
@@ -44,7 +44,7 @@ export function BoxTracker({ boxes, activeShift, onBoxStatusChange, selectedBoxI
             }`}
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium">#{box.id}</span>
+              <span className="text-xs sm:text-sm font-medium">#{box.id}</span>
               {box.isAtEntrance && (
                 <span className="text-xs bg-blue-100 text-blue-700 px-1 rounded">E</span>
               )}

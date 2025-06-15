@@ -18,13 +18,13 @@ export function FloorPlan({ boxes, onBoxClick }: FloorPlanProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
         <div className="flex items-center">
           <MapPin className="w-4 h-4 text-gray-400 mr-2" />
-          <h3 className="font-medium text-gray-900">Floor Plan</h3>
+          <h3 className="font-medium text-gray-900 text-sm sm:text-base">Floor Plan</h3>
         </div>
-        <div className="flex items-center space-x-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
           <div className="flex items-center space-x-1">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-gray-500">Active</span>
@@ -65,12 +65,12 @@ export function FloorPlan({ boxes, onBoxClick }: FloorPlanProps) {
             return (
               <button
                 key={id}
-                className={`absolute w-4 h-4 rounded-full border-2 border-white cursor-pointer transition-all hover:scale-125 shadow-sm ${getBoxStatusColor(box?.status || 'assigned')}`}
+                className={`absolute w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white cursor-pointer transition-all hover:scale-125 shadow-sm ${getBoxStatusColor(box?.status || 'assigned')}`}
                 style={{ top, left, transform: 'translate(-50%, -50%)' }}
                 onClick={() => onBoxClick(id)}
                 title={`Box #${id}`}
               >
-                <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-700 bg-white px-1 rounded shadow-sm">
+                <div className="absolute -bottom-3 sm:-bottom-4 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-700 bg-white px-1 rounded shadow-sm">
                   {id}
                 </div>
               </button>

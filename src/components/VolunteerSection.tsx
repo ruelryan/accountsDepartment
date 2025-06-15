@@ -34,13 +34,13 @@ export function VolunteerSection({ title, volunteers, roleType, activeShift, onS
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 p-4">
+    <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <Users className="w-4 h-4 text-gray-400 mr-2" />
-          <h3 className="font-medium text-gray-900">{title}</h3>
+          <h3 className="font-medium text-gray-900 text-sm sm:text-base">{title}</h3>
         </div>
-        <span className="text-sm text-gray-500">{filteredVolunteers.length}</span>
+        <span className="text-xs sm:text-sm text-gray-500">{filteredVolunteers.length}</span>
       </div>
       
       <div className="space-y-2">
@@ -58,16 +58,16 @@ export function VolunteerSection({ title, volunteers, roleType, activeShift, onS
           return (
             <div
               key={volunteer.id}
-              className={`flex items-center justify-between p-2 rounded border transition-all ${getStatusColor(currentRole.status)}`}
+              className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 rounded border transition-all space-y-2 sm:space-y-0 ${getStatusColor(currentRole.status)}`}
             >
               <div className="flex items-center space-x-2">
                 {getStatusIcon(currentRole.status)}
-                <div>
-                  <div className="text-sm font-medium text-gray-900">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-gray-900 truncate">
                     {volunteer.firstName} {volunteer.lastName}
                   </div>
                   {(currentRole.location || currentRole.boxNumber) && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 truncate">
                       {currentRole.boxNumber && `Box #${currentRole.boxNumber}`}
                       {currentRole.location && currentRole.boxNumber && ' • '}
                       {currentRole.location && !currentRole.boxNumber && currentRole.location}
@@ -79,7 +79,7 @@ export function VolunteerSection({ title, volunteers, roleType, activeShift, onS
               <select
                 value={currentRole.status}
                 onChange={(e) => onStatusChange(volunteer.id, e.target.value)}
-                className="text-xs border-0 bg-transparent focus:outline-none font-medium"
+                className="text-xs border-0 bg-transparent focus:outline-none font-medium w-full sm:w-auto"
               >
                 <option value="assigned">Assigned</option>
                 <option value="checked_in">Checked In</option>

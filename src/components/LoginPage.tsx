@@ -32,29 +32,31 @@ export function LoginPage({ onLogin, onCancel }: LoginPageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%239C92AC%22 fill-opacity=%220.05%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20"></div>
+      </div>
       
       <div className="relative w-full max-w-md">
         {/* Back Button */}
         <button
           onClick={onCancel}
-          className="absolute -top-16 left-0 flex items-center text-white/70 hover:text-white transition-colors group"
+          className="absolute -top-12 sm:-top-16 left-0 flex items-center text-white/70 hover:text-white transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Volunteer Portal
+          <span className="text-sm sm:text-base">Back to Volunteer Portal</span>
         </button>
 
         {/* Login Card */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Shield className="w-8 h-8 text-white" />
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 sm:p-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Admin Access</h1>
-            <p className="text-white/70">Enter your credentials to access the admin dashboard</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">Admin Access</h1>
+            <p className="text-white/70 text-sm sm:text-base">Enter your credentials to access the admin dashboard</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-white/90 mb-2">
                 Username
@@ -66,7 +68,7 @@ export function LoginPage({ onLogin, onCancel }: LoginPageProps) {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm text-sm sm:text-base"
                   placeholder="Enter username"
                   required
                 />
@@ -84,7 +86,7 @@ export function LoginPage({ onLogin, onCancel }: LoginPageProps) {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm text-sm sm:text-base"
                   placeholder="Enter password"
                   required
                 />
@@ -100,7 +102,7 @@ export function LoginPage({ onLogin, onCancel }: LoginPageProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
@@ -113,7 +115,7 @@ export function LoginPage({ onLogin, onCancel }: LoginPageProps) {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-white/10">
+          <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-white/10">
             <p className="text-xs text-white/50 text-center">
               For demonstration: username: <span className="text-white/70 font-mono">admin</span>, password: <span className="text-white/70 font-mono">accounts2024</span>
             </p>

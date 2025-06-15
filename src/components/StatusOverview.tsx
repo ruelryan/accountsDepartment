@@ -43,17 +43,17 @@ export function StatusOverview({ stats }: StatusOverviewProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
       {cards.map((card, index) => (
-        <div key={index} className="bg-white rounded-lg p-4 border border-gray-100">
+        <div key={index} className="bg-white rounded-lg p-3 sm:p-4 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-lg sm:text-2xl font-bold text-gray-900">
                 {card.value}{card.total && `/${card.total}`}{card.suffix}
               </div>
-              <div className="text-sm text-gray-500">{card.label}</div>
+              <div className="text-xs sm:text-sm text-gray-500">{card.label}</div>
             </div>
-            <card.icon className={`w-5 h-5 ${card.color}`} />
+            <card.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${card.color}`} />
           </div>
         </div>
       ))}

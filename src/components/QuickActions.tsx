@@ -9,8 +9,8 @@ interface QuickActionsProps {
 
 export function QuickActions({ onEmergencyAlert, onGenerateReport, onRefreshData }: QuickActionsProps) {
   return (
-    <div className="bg-white rounded-lg border border-gray-100 p-4">
-      <h3 className="font-medium text-gray-900 mb-4">Actions</h3>
+    <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-4">
+      <h3 className="font-medium text-gray-900 mb-4 text-sm sm:text-base">Actions</h3>
       
       <div className="space-y-2">
         <button

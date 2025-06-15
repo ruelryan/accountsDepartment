@@ -27,10 +27,10 @@ export function ShiftTimeline({ shifts, activeShift, onShiftChange }: ShiftTimel
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 p-4">
+    <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-4">
       <div className="flex items-center mb-4">
         <Clock className="w-4 h-4 text-gray-400 mr-2" />
-        <h3 className="font-medium text-gray-900">Schedule</h3>
+        <h3 className="font-medium text-gray-900 text-sm sm:text-base">Schedule</h3>
       </div>
       
       <div className="space-y-4">
@@ -66,7 +66,7 @@ export function ShiftTimeline({ shifts, activeShift, onShiftChange }: ShiftTimel
                       <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500 ml-5">
+                  <div className="text-xs text-gray-500 ml-5 truncate">
                     {shift.startTime}
                   </div>
                 </button>
