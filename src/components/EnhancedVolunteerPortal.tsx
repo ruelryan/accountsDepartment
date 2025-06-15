@@ -9,8 +9,9 @@ import {
   AlertTriangle, 
   FileText, 
   Calendar,
-  ArrowLeft,
-  Users
+  Users,
+  Settings,
+  Shield
 } from 'lucide-react';
 import { FloorPlan } from './FloorPlan';
 import { boxes } from '../data/initialData';
@@ -18,10 +19,10 @@ import { boxes } from '../data/initialData';
 interface EnhancedVolunteerPortalProps {
   volunteers: Volunteer[];
   shifts: Shift[];
-  onBackToMain: () => void;
+  onAdminLogin?: () => void;
 }
 
-export function EnhancedVolunteerPortal({ volunteers, shifts, onBackToMain }: EnhancedVolunteerPortalProps) {
+export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: EnhancedVolunteerPortalProps) {
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
 
   const handleVolunteerSelect = (volunteer: Volunteer) => {
@@ -34,36 +35,58 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onBackToMain }: En
         volunteer={selectedVolunteer} 
         shifts={shifts}
         onBack={() => setSelectedVolunteer(null)} 
-        onBackToMain={onBackToMain} 
+        onAdminLogin={onAdminLogin}
       />
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50">
+      {/* Header with Admin Login */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Convention Accounts</h1>
+                <p className="text-sm text-gray-600">Volunteer Portal</p>
+              </div>
+            </div>
+            
+            {onAdminLogin && (
+              <button
+                onClick={onAdminLogin}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg"
+              >
+                <Shield className="w-4 h-4" />
+                <span>Admin Login</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <User className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl">
+              <User className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Volunteer Portal</h1>
-          <p className="text-lg text-gray-600 mb-6">Select your name to view your assignment details</p>
-          <button
-            onClick={onBackToMain}
-            className="inline-flex items-center px-6 py-3 bg-white text-teal-600 rounded-lg hover:bg-gray-50 font-medium shadow-sm border border-teal-200 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Main Dashboard
-          </button>
+          <h2 className="text-4xl font-bold text-gray-900 mb-3">Welcome, Volunteers!</h2>
+          <p className="text-lg text-gray-600 mb-2">Find your assignment for the convention</p>
+          <p className="text-sm text-gray-500">Select your name below to view your detailed assignment information</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900">Find Your Assignment</h2>
-            <div className="text-sm text-gray-500">
-              {volunteers.length} volunteers registered
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-2xl font-semibold text-gray-900">Find Your Assignment</h3>
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <Users className="w-4 h-4" />
+              <span>{volunteers.length} volunteers registered</span>
             </div>
           </div>
           
@@ -76,10 +99,10 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onBackToMain }: En
                 <button
                   key={volunteer.id}
                   onClick={() => handleVolunteerSelect(volunteer)}
-                  className="p-4 text-left border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-all group hover:shadow-md"
+                  className="p-5 text-left border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-all group hover:shadow-lg transform hover:scale-[1.02] bg-white/60 backdrop-blur-sm"
                 >
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center shadow-sm">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center shadow-md">
                       <span className="text-white font-bold text-sm">
                         {volunteer.firstName[0]}{volunteer.lastName[0]}
                       </span>
@@ -108,7 +131,7 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onBackToMain }: En
                   <div className="space-y-2">
                     {volunteer.roles.slice(0, 2).map((role, index) => (
                       <div key={index} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 capitalize">
+                        <span className="text-gray-600 capitalize font-medium">
                           {role.type.replace('_', ' ')}
                         </span>
                         {role.day && (
@@ -123,7 +146,7 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onBackToMain }: En
                       </div>
                     ))}
                     {volunteer.roles.length > 2 && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 font-medium">
                         +{volunteer.roles.length - 2} more assignment{volunteer.roles.length - 2 !== 1 ? 's' : ''}
                       </div>
                     )}
@@ -131,6 +154,39 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onBackToMain }: En
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* Quick Info Section */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-blue-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900">Convention Days</h4>
+            </div>
+            <p className="text-sm text-gray-600">Friday, Saturday & Sunday sessions with multiple shifts throughout each day.</p>
+          </div>
+
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 text-green-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900">Your Role</h4>
+            </div>
+            <p className="text-sm text-gray-600">Each volunteer has specific assignments including box watching, key duties, or money counting.</p>
+          </div>
+
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-purple-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900">Important</h4>
+            </div>
+            <p className="text-sm text-gray-600">Arrive 10 minutes early for your shift and bring proper identification.</p>
           </div>
         </div>
       </div>
@@ -142,10 +198,10 @@ interface VolunteerDashboardProps {
   volunteer: Volunteer;
   shifts: Shift[];
   onBack: () => void;
-  onBackToMain: () => void;
+  onAdminLogin?: () => void;
 }
 
-function VolunteerDashboard({ volunteer, shifts, onBack, onBackToMain }: VolunteerDashboardProps) {
+function VolunteerDashboard({ volunteer, shifts, onBack, onAdminLogin }: VolunteerDashboardProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'schedule' | 'floorplan'>('overview');
 
   const getVolunteerShifts = () => {
@@ -226,9 +282,36 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onBackToMain }: Volunte
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50">
+      {/* Header with Admin Login */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Convention Accounts</h1>
+                <p className="text-sm text-gray-600">Volunteer Portal</p>
+              </div>
+            </div>
+            
+            {onAdminLogin && (
+              <button
+                onClick={onAdminLogin}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg"
+              >
+                <Shield className="w-4 h-4" />
+                <span>Admin Login</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
@@ -254,32 +337,24 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onBackToMain }: Volunte
                 </div>
               </div>
             </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={onBack}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                ← Back to Portal
-              </button>
-              <button
-                onClick={onBackToMain}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium"
-              >
-                Main Dashboard
-              </button>
-            </div>
+            <button
+              onClick={onBack}
+              className="px-6 py-3 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg"
+            >
+              ← Back to Portal
+            </button>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 mb-6">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 mb-6">
           <div className="flex border-b border-gray-200">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-6 py-4 font-medium text-sm ${
+              className={`px-6 py-4 font-medium text-sm transition-all ${
                 activeTab === 'overview'
-                  ? 'border-b-2 border-teal-500 text-teal-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-teal-500 text-teal-600 bg-teal-50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
               <Package className="w-4 h-4 inline mr-2" />
@@ -287,10 +362,10 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onBackToMain }: Volunte
             </button>
             <button
               onClick={() => setActiveTab('schedule')}
-              className={`px-6 py-4 font-medium text-sm ${
+              className={`px-6 py-4 font-medium text-sm transition-all ${
                 activeTab === 'schedule'
-                  ? 'border-b-2 border-teal-500 text-teal-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-teal-500 text-teal-600 bg-teal-50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
               <Calendar className="w-4 h-4 inline mr-2" />
@@ -298,10 +373,10 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onBackToMain }: Volunte
             </button>
             <button
               onClick={() => setActiveTab('floorplan')}
-              className={`px-6 py-4 font-medium text-sm ${
+              className={`px-6 py-4 font-medium text-sm transition-all ${
                 activeTab === 'floorplan'
-                  ? 'border-b-2 border-teal-500 text-teal-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-teal-500 text-teal-600 bg-teal-50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
               <MapPin className="w-4 h-4 inline mr-2" />
@@ -348,7 +423,7 @@ function AssignmentOverview({
           const instructions = getInstructions(role.type);
           
           return (
-            <div key={index} className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div key={index} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-gray-900 capitalize">
                   {role.type.replace('_', ' ')}
@@ -436,7 +511,7 @@ function AssignmentOverview({
       </div>
 
       {/* Complete Instructions */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
           <FileText className="w-5 h-5 mr-2 text-teal-600" />
           Complete Instructions & Guidelines
@@ -478,7 +553,7 @@ function FullScheduleView({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-6">Your Complete Convention Schedule</h3>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -523,7 +598,7 @@ function FullScheduleView({
       </div>
 
       {/* Convention Schedule Overview */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
           <Calendar className="w-5 h-5 mr-2 text-teal-600" />
           Convention Schedule Overview
@@ -554,7 +629,7 @@ function FloorPlanView({ volunteer }: { volunteer: Volunteer }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4">Your Box Assignments</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
