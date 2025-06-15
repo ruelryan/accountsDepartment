@@ -372,9 +372,11 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onAdminLogin }: Volunte
               className="w-full flex items-center justify-between p-4 border-b border-gray-200"
             >
               <div className="flex items-center space-x-2">
-                {tabs.find(tab => tab.id === activeTab)?.icon && (
-                  <tabs.find(tab => tab.id === activeTab)!.icon className="w-4 h-4" />
-                )}
+                {(() => {
+                  const activeTabData = tabs.find(tab => tab.id === activeTab);
+                  const IconComponent = activeTabData?.icon;
+                  return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                })()}
                 <span className="font-medium">{tabs.find(tab => tab.id === activeTab)?.label}</span>
               </div>
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
