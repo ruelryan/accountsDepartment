@@ -217,4 +217,3 @@ function BoxPosition({ boxId, box, position, onBoxClick, getBoxStatusColor, isEn
     </button>
   );
 }
-</BoxPosition>
