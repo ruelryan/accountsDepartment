@@ -728,32 +728,6 @@ function FullScheduleView({
           ))}
         </div>
       </div>
-
-      {/* Convention Schedule Overview */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <Calendar className="w-5 h-5 mr-2 text-teal-600" />
-          Convention Schedule Overview - July 11-13, 2025
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {days.map(day => (
-            <div key={day} className={`p-4 rounded-lg border ${getDayColor(day)}`}>
-              <h4 className="font-semibold mb-2">{day}</h4>
-              <p className="text-xs opacity-75 mb-2">
-                {day === 'Friday' ? 'July 11, 2025' : 
-                 day === 'Saturday' ? 'July 12, 2025' : 
-                 'July 13, 2025'}
-              </p>
-              <div className="text-sm space-y-1">
-                <div>Morning Session</div>
-                <div>Noon Intermission</div>
-                <div>Afternoon Session</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
