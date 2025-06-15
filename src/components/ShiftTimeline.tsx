@@ -1,6 +1,6 @@
 import React from 'react';
 import { Shift } from '../types';
-import { Clock, CheckCircle, Circle, Calendar } from 'lucide-react';
+import { Clock, Circle, CheckCircle } from 'lucide-react';
 
 interface ShiftTimelineProps {
   shifts: Shift[];
@@ -9,7 +9,6 @@ interface ShiftTimelineProps {
 }
 
 export function ShiftTimeline({ shifts, activeShift, onShiftChange }: ShiftTimelineProps) {
-  // Group shifts by day
   const shiftsByDay = shifts.reduce((acc, shift) => {
     if (!acc[shift.day]) {
       acc[shift.day] = [];
@@ -20,89 +19,57 @@ export function ShiftTimeline({ shifts, activeShift, onShiftChange }: ShiftTimel
 
   const getDayColor = (day: string) => {
     switch (day) {
-      case 'Friday': return 'bg-blue-50 border-blue-200';
-      case 'Saturday': return 'bg-green-50 border-green-200';
-      case 'Sunday': return 'bg-orange-50 border-orange-200';
-      default: return 'bg-gray-50 border-gray-200';
-    }
-  };
-
-  const getDayTextColor = (day: string) => {
-    switch (day) {
-      case 'Friday': return 'text-blue-900';
-      case 'Saturday': return 'text-green-900';
-      case 'Sunday': return 'text-orange-900';
-      default: return 'text-gray-900';
+      case 'Friday': return 'border-l-blue-400';
+      case 'Saturday': return 'border-l-green-400';
+      case 'Sunday': return 'border-l-orange-400';
+      default: return 'border-l-gray-400';
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-        <Clock className="w-5 h-5 mr-2 text-teal-600" />
-        Convention Schedule
-      </h3>
+    <div className="bg-white rounded-lg border border-gray-100 p-4">
+      <div className="flex items-center mb-4">
+        <Clock className="w-4 h-4 text-gray-400 mr-2" />
+        <h3 className="font-medium text-gray-900">Schedule</h3>
+      </div>
       
-      <div className="space-y-6">
+      <div className="space-y-4">
         {Object.entries(shiftsByDay).map(([day, dayShifts]) => (
-          <div key={day} className={`p-4 rounded-lg border ${getDayColor(day)}`}>
-            <div className="flex items-center mb-3">
-              <Calendar className="w-4 h-4 mr-2 text-gray-600" />
-              <h4 className={`font-semibold ${getDayTextColor(day)}`}>{day}</h4>
+          <div key={day}>
+            <div className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">
+              {day}
             </div>
             
-            <div className="space-y-3">
-              {dayShifts.map((shift, index) => (
-                <div
+            <div className="space-y-1">
+              {dayShifts.map((shift) => (
+                <button
                   key={shift.id}
-                  className={`relative flex items-center p-3 rounded-lg border transition-all cursor-pointer ${
-                    activeShift === shift.id
-                      ? 'border-teal-500 bg-teal-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
                   onClick={() => onShiftChange(shift.id)}
+                  className={`w-full text-left p-2 rounded border-l-2 transition-all ${
+                    activeShift === shift.id
+                      ? `${getDayColor(day)} bg-gray-50`
+                      : 'border-l-gray-200 hover:bg-gray-50'
+                  }`}
                 >
-                  <div className="flex-shrink-0 mr-3">
-                    {activeShift === shift.id ? (
-                      <CheckCircle className="w-5 h-5 text-teal-600" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-gray-400" />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <h5 className={`font-medium text-sm ${
-                        activeShift === shift.id ? 'text-teal-900' : 'text-gray-900'
-                      }`}>
-                        {shift.name.replace(` - ${day}`, '')}
-                      </h5>
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        activeShift === shift.id
-                          ? 'bg-teal-200 text-teal-800'
-                          : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        {activeShift === shift.id ? 'Active' : 'Scheduled'}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      {activeShift === shift.id ? (
+                        <CheckCircle className="w-3 h-3 text-teal-500" />
+                      ) : (
+                        <Circle className="w-3 h-3 text-gray-300" />
+                      )}
+                      <span className="text-sm font-medium text-gray-900">
+                        Shift {shift.id}
                       </span>
                     </div>
-                    
-                    <p className={`text-xs mb-1 ${
-                      activeShift === shift.id ? 'text-teal-700' : 'text-gray-600'
-                    }`}>
-                      {shift.startTime} - {shift.endTime}
-                    </p>
-                    
-                    <p className={`text-xs ${
-                      activeShift === shift.id ? 'text-teal-600' : 'text-gray-500'
-                    }`}>
-                      {shift.description.replace(`${day} `, '')}
-                    </p>
+                    {activeShift === shift.id && (
+                      <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+                    )}
                   </div>
-                  
-                  {index < dayShifts.length - 1 && (
-                    <div className="absolute left-6 top-full w-0.5 h-3 bg-gray-300 -mt-1.5"></div>
-                  )}
-                </div>
+                  <div className="text-xs text-gray-500 ml-5">
+                    {shift.startTime}
+                  </div>
+                </button>
               ))}
             </div>
           </div>

@@ -49,7 +49,6 @@ function App() {
 
   const handleBoxClick = (boxId: number) => {
     setSelectedBoxId(boxId);
-    // Scroll to box tracker section
     const boxTrackerElement = document.getElementById('box-tracker');
     if (boxTrackerElement) {
       boxTrackerElement.scrollIntoView({ behavior: 'smooth' });
@@ -86,7 +85,6 @@ function App() {
   };
 
   const handleRefreshData = () => {
-    // Simulate data refresh
     window.location.reload();
   };
 
@@ -137,37 +135,32 @@ function App() {
         totalVolunteers={volunteers.length}
       />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Top Stats Bar */}
         <StatusOverview stats={stats} />
         
-        {/* Navigation */}
-        <div className="mb-6 flex justify-center space-x-4">
-          <button
-            onClick={() => setCurrentView('portal')}
-            className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
-          >
-            <span>🎯</span>
-            <span>Volunteer Portal</span>
-          </button>
-          <button
-            onClick={() => setCurrentView('admin')}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
-          >
-            <span>⚙️</span>
-            <span>Admin Control</span>
-          </button>
+        {/* Navigation Pills */}
+        <div className="flex justify-center mb-8">
+          <div className="flex bg-white rounded-full p-1 shadow-sm border">
+            <button
+              onClick={() => setCurrentView('portal')}
+              className="px-6 py-2 text-sm font-medium text-gray-600 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-all"
+            >
+              Volunteer Portal
+            </button>
+            <button
+              onClick={() => setCurrentView('admin')}
+              className="px-6 py-2 text-sm font-medium text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-all"
+            >
+              Admin Control
+            </button>
+          </div>
         </div>
         
-        {/* Floor Plan Section */}
-        <div className="mb-6">
-          <FloorPlan 
-            boxes={boxes}
-            onBoxClick={handleBoxClick}
-          />
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-1">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Sidebar - Schedule */}
+          <div className="col-span-12 lg:col-span-3">
             <ShiftTimeline 
               shifts={shiftsData}
               activeShift={activeShift}
@@ -175,27 +168,37 @@ function App() {
             />
           </div>
           
-          <div className="lg:col-span-2">
-            <div className="space-y-6">
-              <div id="box-tracker">
-                <BoxTracker 
-                  boxes={boxes}
-                  activeShift={activeShift}
-                  onBoxStatusChange={handleBoxStatusChange}
-                  selectedBoxId={selectedBoxId}
-                />
-              </div>
-              
-              <QuickActions
-                onEmergencyAlert={handleEmergencyAlert}
-                onGenerateReport={handleGenerateReport}
-                onRefreshData={handleRefreshData}
+          {/* Center Content */}
+          <div className="col-span-12 lg:col-span-6 space-y-6">
+            {/* Floor Plan */}
+            <FloorPlan 
+              boxes={boxes}
+              onBoxClick={handleBoxClick}
+            />
+            
+            {/* Box Tracker */}
+            <div id="box-tracker">
+              <BoxTracker 
+                boxes={boxes}
+                activeShift={activeShift}
+                onBoxStatusChange={handleBoxStatusChange}
+                selectedBoxId={selectedBoxId}
               />
             </div>
           </div>
+          
+          {/* Right Sidebar - Actions */}
+          <div className="col-span-12 lg:col-span-3">
+            <QuickActions
+              onEmergencyAlert={handleEmergencyAlert}
+              onGenerateReport={handleGenerateReport}
+              onRefreshData={handleRefreshData}
+            />
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Volunteer Sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
           <VolunteerSection
             title="Box Watchers"
             volunteers={volunteers}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, Users, Package, CheckCircle } from 'lucide-react';
+import { Users, Package, CheckCircle, TrendingUp } from 'lucide-react';
 
 interface StatusOverviewProps {
   stats: {
@@ -14,55 +14,46 @@ interface StatusOverviewProps {
 export function StatusOverview({ stats }: StatusOverviewProps) {
   const cards = [
     {
-      title: 'Active Volunteers',
-      value: `${stats.activeVolunteers}/${stats.totalVolunteers}`,
+      label: 'Active',
+      value: stats.activeVolunteers,
+      total: stats.totalVolunteers,
       icon: Users,
-      color: 'bg-teal-500',
-      bgColor: 'bg-teal-50',
-      textColor: 'text-teal-900'
+      color: 'text-teal-600'
     },
     {
-      title: 'Active Boxes',
-      value: `${stats.activeBoxes}/${stats.totalBoxes}`,
+      label: 'Boxes',
+      value: stats.activeBoxes,
+      total: stats.totalBoxes,
       icon: Package,
-      color: 'bg-blue-500',
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-900'
+      color: 'text-blue-600'
     },
     {
-      title: 'Completed Tasks',
-      value: stats.completedTasks.toString(),
+      label: 'Complete',
+      value: stats.completedTasks,
       icon: CheckCircle,
-      color: 'bg-green-500',
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-900'
+      color: 'text-green-600'
     },
     {
-      title: 'Efficiency',
-      value: '98%',
+      label: 'Efficiency',
+      value: 98,
+      suffix: '%',
       icon: TrendingUp,
-      color: 'bg-yellow-500',
-      bgColor: 'bg-yellow-50',
-      textColor: 'text-yellow-900'
+      color: 'text-orange-600'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       {cards.map((card, index) => (
-        <div key={index} className={`${card.bgColor} rounded-lg p-6 border border-opacity-20`}>
+        <div key={index} className="bg-white rounded-lg p-4 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${card.textColor} opacity-80`}>
-                {card.title}
-              </p>
-              <p className={`text-2xl font-bold ${card.textColor} mt-1`}>
-                {card.value}
-              </p>
+              <div className="text-2xl font-bold text-gray-900">
+                {card.value}{card.total && `/${card.total}`}{card.suffix}
+              </div>
+              <div className="text-sm text-gray-500">{card.label}</div>
             </div>
-            <div className={`${card.color} p-3 rounded-lg`}>
-              <card.icon className="w-6 h-6 text-white" />
-            </div>
+            <card.icon className={`w-5 h-5 ${card.color}`} />
           </div>
         </div>
       ))}

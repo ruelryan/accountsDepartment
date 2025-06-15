@@ -17,41 +17,33 @@ export function VolunteerSection({ title, volunteers, roleType, activeShift, onS
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'checked_in':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'active':
-        return <Clock className="w-4 h-4 text-blue-500" />;
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-gray-500" />;
-      default:
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+      case 'checked_in': return <CheckCircle className="w-3 h-3 text-green-500" />;
+      case 'active': return <Clock className="w-3 h-3 text-blue-500" />;
+      case 'completed': return <CheckCircle className="w-3 h-3 text-gray-400" />;
+      default: return <AlertTriangle className="w-3 h-3 text-yellow-500" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'checked_in':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'active':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'completed':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'checked_in': return 'bg-green-50 border-green-200';
+      case 'active': return 'bg-blue-50 border-blue-200';
+      case 'completed': return 'bg-gray-50 border-gray-200';
+      default: return 'bg-yellow-50 border-yellow-200';
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-        <Users className="w-5 h-5 mr-2 text-teal-600" />
-        {title}
-        <span className="ml-2 text-sm font-normal text-gray-600">
-          ({filteredVolunteers.length})
-        </span>
-      </h3>
+    <div className="bg-white rounded-lg border border-gray-100 p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <Users className="w-4 h-4 text-gray-400 mr-2" />
+          <h3 className="font-medium text-gray-900">{title}</h3>
+        </div>
+        <span className="text-sm text-gray-500">{filteredVolunteers.length}</span>
+      </div>
       
-      <div className="space-y-3">
+      <div className="space-y-2">
         {filteredVolunteers.map(volunteer => {
           const currentRole = volunteer.roles.find(role => role.type === roleType);
           if (!currentRole) return null;
@@ -66,38 +58,28 @@ export function VolunteerSection({ title, volunteers, roleType, activeShift, onS
           return (
             <div
               key={volunteer.id}
-              className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
-                currentRole.status === 'active' 
-                  ? 'border-teal-200 bg-teal-50' 
-                  : 'border-gray-200 bg-gray-50'
-              }`}
+              className={`flex items-center justify-between p-2 rounded border transition-all ${getStatusColor(currentRole.status)}`}
             >
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  {getStatusIcon(currentRole.status)}
-                </div>
+              <div className="flex items-center space-x-2">
+                {getStatusIcon(currentRole.status)}
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <div className="text-sm font-medium text-gray-900">
                     {volunteer.firstName} {volunteer.lastName}
-                  </p>
-                  <div className="flex items-center space-x-2 text-xs text-gray-600">
-                    {currentRole.shift && (
-                      <span>Shift {currentRole.shift}</span>
-                    )}
-                    {currentRole.location && (
-                      <span>• {currentRole.location}</span>
-                    )}
-                    {currentRole.boxNumber && (
-                      <span>• Box #{currentRole.boxNumber}</span>
-                    )}
                   </div>
+                  {(currentRole.location || currentRole.boxNumber) && (
+                    <div className="text-xs text-gray-500">
+                      {currentRole.boxNumber && `Box #${currentRole.boxNumber}`}
+                      {currentRole.location && currentRole.boxNumber && ' • '}
+                      {currentRole.location && !currentRole.boxNumber && currentRole.location}
+                    </div>
+                  )}
                 </div>
               </div>
               
               <select
                 value={currentRole.status}
                 onChange={(e) => onStatusChange(volunteer.id, e.target.value)}
-                className={`text-xs px-2 py-1 rounded-full border font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 ${getStatusColor(currentRole.status)}`}
+                className="text-xs border-0 bg-transparent focus:outline-none font-medium"
               >
                 <option value="assigned">Assigned</option>
                 <option value="checked_in">Checked In</option>
