@@ -19,29 +19,9 @@ export function FloorPlan({ boxes, onBoxClick }: FloorPlanProps) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-3 sm:space-y-0">
-        <div className="flex items-center">
-          <MapPin className="w-5 h-5 text-teal-600 mr-2" />
-          <h3 className="font-semibold text-gray-900 text-base sm:text-lg">Convention Hall Floor Plan</h3>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></div>
-            <span className="text-gray-600 font-medium">Active</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded-full shadow-sm"></div>
-            <span className="text-gray-600 font-medium">Assigned</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full shadow-sm"></div>
-            <span className="text-gray-600 font-medium">Attention</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-gray-400 rounded-full shadow-sm"></div>
-            <span className="text-gray-600 font-medium">Returned</span>
-          </div>
-        </div>
+      <div className="flex items-center mb-6">
+        <MapPin className="w-5 h-5 text-teal-600 mr-2" />
+        <h3 className="font-semibold text-gray-900 text-base sm:text-lg">Convention Hall Floor Plan</h3>
       </div>
 
       {/* Scrollable Floor Plan Container */}
