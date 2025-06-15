@@ -320,7 +320,7 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onAdminLogin }: Volunte
     return shiftsByDay;
   };
 
-  const getInstructions = (roleType: string) => {
+  const getInstructions = (roleType: string, shiftNumber?: number) => {
     const baseInstructions = [
       "Arrive 10 minutes before your shift begins for proper handover",
       "Bring proper identification and be ready to show it when requested",
@@ -330,32 +330,83 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onAdminLogin }: Volunte
 
     const roleSpecificInstructions = {
       box_watcher: [
-        ...baseInstructions,
+        // General Box Watcher Instructions
+        "Be neat, clean, and modest in dress and grooming at all times",
         "Never leave your assigned box unattended under any circumstances",
         "Only allow authorized Accounts Department personnel to handle your box",
         "Pay close attention to prevent anyone from walking off with the box",
-        "Be neat, clean, and modest in dress and grooming",
         "Do not allow anyone to take anything out of your box during your shift",
         "Wait for known accounting personnel (keymen) with proper identification during shift changes",
-        "Return your box to the designated location at the end of your shift"
+        "Box number can be seen at the bottom of the box",
+        "If the next box watcher has not yet arrived, keyman must assign replacement from accounts department until the assigned person arrives",
+        
+        // Shift-specific instructions
+        ...(shiftNumber === 1 ? [
+          "🔹 1st Shift Instructions:",
+          "• Go to 'Box Storage' and get your contribution box based on your assigned box number",
+          "• Go to your designated location and place the box (ask keymen for assistance if needed)",
+          "• At the start of morning session during opening song, bring the box to 'Box Storage' area to be emptied",
+          "• If assigned to entrance/exit area, return to box location and wait until 2nd shift arrives",
+          "• Otherwise, this marks the end of your shift"
+        ] : []),
+        
+        ...(shiftNumber === 2 ? [
+          "🔹 2nd Shift Instructions:",
+          "• If assigned to entrance/exit location, go directly to designated location",
+          "• Otherwise, go to 'Box Storage' and get your contribution box based on assigned number",
+          "• Go to your location and place the box (ask keymen for assistance if needed)",
+          "• Wait for 3rd shift to arrive midway through noon intermission (around 12:55pm)",
+          "• That marks the end of your shift"
+        ] : []),
+        
+        ...(shiftNumber === 3 ? [
+          "🔹 3rd Shift Instructions:",
+          "• Go to your assigned location (ask keyman for help if needed)",
+          "• At the start of afternoon session during opening song, bring box to 'Box Storage' area to be emptied",
+          "• If assigned to entrance/exit area, return to box location and wait until 4th shift arrives",
+          "• Otherwise, this marks the end of your shift"
+        ] : []),
+        
+        ...(shiftNumber === 4 ? [
+          "🔹 4th Shift Instructions:",
+          "• If assigned to entrance/exit location, go directly to designated location",
+          "• Otherwise, go to 'Box Storage' and get your contribution box based on assigned number",
+          "• Go to your location and place the box (ask keymen for assistance if needed)",
+          "• Wait until most attendees in your area have left before ending shift"
+        ] : [])
       ],
+      
       keyman: [
         ...baseInstructions,
-        "Assist with box collection and secure transport to counting area",
-        "Verify volunteer identities during shift changes using proper identification",
-        "Ensure proper documentation of all box transfers and handovers",
-        "Coordinate with Accounts Department for any issues or concerns",
-        "Maintain security protocols at all times during transport",
-        "Work as a team with other keymen for maximum security"
+        "🔹 Keyman Responsibilities:",
+        "• Guide box watchers to their respective locations",
+        "• Monitor contribution boxes - ensure no unauthorized boxes are placed in the area",
+        "• At the end of each shift, verify that no contribution boxes are missing",
+        "• Empty contribution boxes with at least 2 brothers present",
+        "• Verify volunteer identities during shift changes using proper identification",
+        "• Ensure proper documentation of all box transfers and handovers",
+        "• Coordinate with Accounts Department for any issues or concerns",
+        "• Maintain security protocols at all times during transport",
+        "• Work as a team with other keymen for maximum security"
       ],
+      
       money_counter: [
         ...baseInstructions,
-        "Work only at designated counting tables in the secure area",
-        "Follow all security protocols for handling contributions",
-        "Maintain accurate records of all counted amounts",
-        "Report any discrepancies immediately to supervision",
-        "Work in teams for accuracy and security - never count alone",
-        "Keep all counting activities confidential and secure"
+        "🔹 Money Counting Requirements:",
+        "• At least 2 brothers must be present at the counting table at all times",
+        "• Ensure 'Receipt (CO-40)' form is available before counting begins",
+        "• Receipt number must be written beforehand by the accounts overseer",
+        "• Make verification upon counting - double-check all amounts",
+        "• After counting and filling up the 'Receipt (CO-40)' form, promptly give copy to Convention Committee Office",
+        "• Give the other copy to the Accounts Department",
+        "• No one is permitted to take money off any counting table until it has been counted, verified, and recorded",
+        "• No bags, purses, or similar personal items are permitted around or under counting tables",
+        "• An overseer must be assigned for each table to ensure all instructions are followed",
+        "• Work only at designated counting tables in the secure area",
+        "• Follow all security protocols for handling contributions",
+        "• Maintain accurate records of all counted amounts",
+        "• Report any discrepancies immediately to supervision",
+        "• Keep all counting activities confidential and secure"
       ]
     };
 
@@ -538,7 +589,7 @@ function AssignmentOverview({
   volunteer: Volunteer; 
   shifts: Shift[]; 
   getDayColor: (day?: string) => string;
-  getInstructions: (roleType: string) => string[];
+  getInstructions: (roleType: string, shiftNumber?: number) => string[];
 }) {
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -546,7 +597,7 @@ function AssignmentOverview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {volunteer.roles.map((role, index) => {
           const shift = shifts.find(s => s.id === role.shift);
-          const instructions = getInstructions(role.type);
+          const instructions = getInstructions(role.type, role.shift);
           
           return (
             <div key={index} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-6">
@@ -618,7 +669,7 @@ function AssignmentOverview({
                   </div>
                 )}
 
-                {/* Key Instructions */}
+                {/* Key Instructions Preview */}
                 <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                   <div className="flex items-center mb-2">
                     <AlertTriangle className="w-4 h-4 text-yellow-600 mr-2" />
@@ -629,6 +680,9 @@ function AssignmentOverview({
                       <li key={i}>• {instruction}</li>
                     ))}
                   </ul>
+                  <p className="text-xs text-yellow-600 mt-2 font-medium">
+                    See complete instructions below ↓
+                  </p>
                 </div>
               </div>
             </div>
@@ -644,7 +698,7 @@ function AssignmentOverview({
         </h3>
         
         {volunteer.roles.map((role, index) => {
-          const instructions = getInstructions(role.type);
+          const instructions = getInstructions(role.type, role.shift);
           
           return (
             <div key={index} className="mb-6 last:mb-0">
