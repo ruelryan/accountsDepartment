@@ -14,8 +14,7 @@ import {
   MapPin,
   DollarSign,
   CheckCircle,
-  X,
-  UserPlus
+  X
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -36,13 +35,6 @@ export function AdminPanel({
   const [activeTab, setActiveTab] = useState<'volunteers' | 'scheduling' | 'conflicts'>('volunteers');
   const [editingVolunteer, setEditingVolunteer] = useState<Volunteer | null>(null);
   const [conflicts, setConflicts] = useState<ScheduleConflict[]>([]);
-  const [selectedAssignmentBox, setSelectedAssignmentBox] = useState<{
-    type: 'shift' | 'money_counter';
-    id: string | number;
-    day: string;
-    time?: string;
-  } | null>(null);
-  
   const [moneyCountingSessions, setMoneyCountingSessions] = useState<MoneyCountingSession[]>([
     {
       id: 'friday-lunch',
@@ -93,6 +85,114 @@ export function AdminPanel({
       minimumBrothers: 2
     }
   ]);
+
+  // Helper function to check if volunteer has conflicts for a specific assignment
+  const hasConflictForAssignment = useCallback((volunteerId: string, assignmentType: 'shift' | 'money_counter', shiftId?: number, sessionId?: string) => {
+    const volunteer = volunteers.find(v => v.id === volunteerId);
+    if (!volunteer) return true;
+
+    if (assignmentType === 'shift' && shiftId) {
+      const shift = shifts.find(s => s.id === shiftId);
+      if (!shift) return true;
+
+      // Check if already assigned to this shift
+      if (volunteer.roles.some(role => role.shift === shiftId)) return true;
+
+      // Check for same-day conflicts
+      const hasConflictingShift = volunteer.roles.some(role => {
+        if (!role.shift || role.day !== shift.day) return false;
+        
+        // Shifts 1&3 can be combined, shifts 2&4 can be combined on same day
+        const currentShift = role.shift;
+        const newShift = shiftId;
+        
+        // Check if they're compatible combinations
+        if ((currentShift === 1 && newShift === 3) || (currentShift === 3 && newShift === 1)) return false;
+        if ((currentShift === 2 && newShift === 4) || (currentShift === 4 && newShift === 2)) return false;
+        
+        // Otherwise, it's a conflict
+        return true;
+      });
+
+      if (hasConflictingShift) return true;
+
+      // Check money counter conflicts
+      const hasMoneyCounterConflict = volunteer.roles.some(role => {
+        if (role.type !== 'money_counter' || role.day !== shift.day) return false;
+        
+        // Lunch time conflicts (shifts 2 and 3)
+        if (role.time === 'lunch' && (shiftId === 2 || shiftId === 3 || 
+            shiftId === 6 || shiftId === 7 || 
+            shiftId === 10 || shiftId === 11)) {
+          return true;
+        }
+        
+        // After afternoon conflicts (shift 4)
+        if (role.time === 'after_afternoon' && (shiftId === 4 || 
+            shiftId === 8 || shiftId === 12)) {
+          return true;
+        }
+        
+        return false;
+      });
+
+      return hasMoneyCounterConflict;
+    }
+
+    if (assignmentType === 'money_counter' && sessionId) {
+      const session = moneyCountingSessions.find(s => s.id === sessionId);
+      if (!session) return true;
+
+      // Check if already assigned to this session
+      if (session.assignedVolunteers.includes(volunteerId)) return true;
+
+      // Check for shift conflicts
+      const hasConflictingShift = volunteer.roles.some(role => {
+        if (!role.shift || role.day !== session.day) return false;
+        
+        // Lunch time conflicts (shifts 2 and 3)
+        if (session.time === 'lunch') {
+          const conflictingShifts = session.day === 'Friday' ? [2, 3] :
+                                   session.day === 'Saturday' ? [6, 7] :
+                                   [10, 11];
+          return conflictingShifts.includes(role.shift);
+        }
+        
+        // After afternoon conflicts (shift 4)
+        if (session.time === 'after_afternoon') {
+          const conflictingShift = session.day === 'Friday' ? 4 :
+                                  session.day === 'Saturday' ? 8 :
+                                  12;
+          return role.shift === conflictingShift;
+        }
+        
+        return false;
+      });
+
+      return hasConflictingShift;
+    }
+
+    return false;
+  }, [volunteers, shifts, moneyCountingSessions]);
+
+  // Get available volunteers for a specific assignment (automatically filtered)
+  const getAvailableVolunteersForAssignment = useCallback((assignmentType: 'shift' | 'money_counter', roleType?: 'keyman' | 'box_watcher', shiftId?: number, sessionId?: string) => {
+    return volunteers.filter(volunteer => {
+      // Check privilege requirements
+      if (assignmentType === 'shift') {
+        if (roleType === 'keyman') {
+          if (!volunteer.privileges.includes('keyman') || volunteer.gender !== 'male') return false;
+        } else if (roleType === 'box_watcher') {
+          if (!volunteer.privileges.includes('box_watcher')) return false;
+        }
+      } else if (assignmentType === 'money_counter') {
+        if (!volunteer.privileges.includes('money_counter')) return false;
+      }
+
+      // Check for conflicts - automatically exclude conflicted volunteers
+      return !hasConflictForAssignment(volunteer.id, assignmentType, shiftId, sessionId);
+    });
+  }, [volunteers, hasConflictForAssignment]);
 
   const checkScheduleConflicts = useCallback(() => {
     const newConflicts: ScheduleConflict[] = [];
@@ -242,101 +342,121 @@ export function AdminPanel({
     }
   };
 
-  const handleDirectAssignment = (volunteerId: string, assignmentType: 'shift' | 'money_counter', details: any) => {
+  const handleAssignToShift = (volunteerId: string, shiftId: number, roleType: 'keyman' | 'box_watcher', boxNumber?: number) => {
+    // Check for conflicts before assignment
+    if (hasConflictForAssignment(volunteerId, 'shift', shiftId)) {
+      alert('This volunteer has a scheduling conflict and cannot be assigned to this shift.');
+      return;
+    }
+
     const updatedVolunteers = volunteers.map(volunteer => {
       if (volunteer.id === volunteerId) {
-        if (assignmentType === 'shift') {
-          const { shiftId, roleType, boxNumber } = details;
-          const shift = shifts.find(s => s.id === shiftId);
-          const newRole: Role = {
-            type: roleType,
-            shift: shiftId,
-            status: 'assigned',
-            day: shift?.day,
-            boxNumber: roleType === 'box_watcher' ? boxNumber : undefined,
-            location: roleType === 'box_watcher' ? 
-              (boxNumber && boxNumber >= 8 ? 'Entrance/Exit' : 'Box Assignment') : 
-              'Accounts Department'
-          };
+        const shift = shifts.find(s => s.id === shiftId);
+        const newRole: Role = {
+          type: roleType,
+          shift: shiftId,
+          status: 'assigned',
+          day: shift?.day,
+          boxNumber: roleType === 'box_watcher' ? boxNumber : undefined,
+          location: roleType === 'box_watcher' ? 
+            (boxNumber && boxNumber >= 8 ? 'Entrance/Exit' : 'Box Assignment') : 
+            'Accounts Department'
+        };
 
-          return {
-            ...volunteer,
-            roles: [...volunteer.roles, newRole]
-          };
-        } else if (assignmentType === 'money_counter') {
-          const { sessionId } = details;
-          const session = moneyCountingSessions.find(s => s.id === sessionId);
-          if (!session) return volunteer;
-
-          const newRole: Role = {
-            type: 'money_counter',
-            status: 'assigned',
-            day: session.day,
-            location: 'Counting Table',
-            time: session.time
-          };
-
-          return {
-            ...volunteer,
-            roles: [...volunteer.roles, newRole]
-          };
-        }
+        return {
+          ...volunteer,
+          roles: [...volunteer.roles, newRole]
+        };
       }
       return volunteer;
     });
-
-    if (assignmentType === 'money_counter') {
-      const { sessionId } = details;
-      const updatedSessions = moneyCountingSessions.map(s => 
-        s.id === sessionId 
-          ? { ...s, assignedVolunteers: [...s.assignedVolunteers, volunteerId] }
-          : s
-      );
-      setMoneyCountingSessions(updatedSessions);
-    }
 
     onVolunteersUpdate(updatedVolunteers);
     checkScheduleConflicts();
   };
 
-  const handleRemoveAssignment = (volunteerId: string, assignmentType: 'shift' | 'money_counter', details: any) => {
+  const handleRemoveFromShift = (volunteerId: string, shiftId: number, roleType: 'keyman' | 'box_watcher') => {
     const updatedVolunteers = volunteers.map(volunteer => {
       if (volunteer.id === volunteerId) {
-        if (assignmentType === 'shift') {
-          const { shiftId, roleType } = details;
-          return {
-            ...volunteer,
-            roles: volunteer.roles.filter(role => 
-              !(role.type === roleType && role.shift === shiftId)
-            )
-          };
-        } else if (assignmentType === 'money_counter') {
-          const { sessionId } = details;
-          const session = moneyCountingSessions.find(s => s.id === sessionId);
-          if (!session) return volunteer;
-
-          return {
-            ...volunteer,
-            roles: volunteer.roles.filter(role => 
-              !(role.type === 'money_counter' && role.day === session.day && role.time === session.time)
-            )
-          };
-        }
+        return {
+          ...volunteer,
+          roles: volunteer.roles.filter(role => 
+            !(role.type === roleType && role.shift === shiftId)
+          )
+        };
       }
       return volunteer;
     });
 
-    if (assignmentType === 'money_counter') {
-      const { sessionId } = details;
-      const updatedSessions = moneyCountingSessions.map(s => 
-        s.id === sessionId 
-          ? { ...s, assignedVolunteers: s.assignedVolunteers.filter(id => id !== volunteerId) }
-          : s
-      );
-      setMoneyCountingSessions(updatedSessions);
+    onVolunteersUpdate(updatedVolunteers);
+    checkScheduleConflicts();
+  };
+
+  const handleAssignToMoneyCounter = (volunteerId: string, sessionId: string) => {
+    // Check for conflicts before assignment
+    if (hasConflictForAssignment(volunteerId, 'money_counter', undefined, sessionId)) {
+      alert('This volunteer has a scheduling conflict and cannot be assigned to this money counting session.');
+      return;
     }
 
+    const session = moneyCountingSessions.find(s => s.id === sessionId);
+    if (!session) return;
+
+    // Update volunteer roles
+    const updatedVolunteers = volunteers.map(volunteer => {
+      if (volunteer.id === volunteerId) {
+        const newRole: Role = {
+          type: 'money_counter',
+          status: 'assigned',
+          day: session.day,
+          location: 'Counting Table',
+          time: session.time
+        };
+
+        return {
+          ...volunteer,
+          roles: [...volunteer.roles, newRole]
+        };
+      }
+      return volunteer;
+    });
+
+    // Update money counting session
+    const updatedSessions = moneyCountingSessions.map(s => 
+      s.id === sessionId 
+        ? { ...s, assignedVolunteers: [...s.assignedVolunteers, volunteerId] }
+        : s
+    );
+
     onVolunteersUpdate(updatedVolunteers);
+    setMoneyCountingSessions(updatedSessions);
+    checkScheduleConflicts();
+  };
+
+  const handleRemoveFromMoneyCounter = (volunteerId: string, sessionId: string) => {
+    // Update volunteer roles
+    const updatedVolunteers = volunteers.map(volunteer => {
+      if (volunteer.id === volunteerId) {
+        return {
+          ...volunteer,
+          roles: volunteer.roles.filter(role => 
+            !(role.type === 'money_counter' && role.day === moneyCountingSessions.find(s => s.id === sessionId)?.day && 
+              role.time === moneyCountingSessions.find(s => s.id === sessionId)?.time)
+          )
+        };
+      }
+      return volunteer;
+    });
+
+    // Update money counting session
+    const updatedSessions = moneyCountingSessions.map(s => 
+      s.id === sessionId 
+        ? { ...s, assignedVolunteers: s.assignedVolunteers.filter(id => id !== volunteerId) }
+        : s
+    );
+
+    onVolunteersUpdate(updatedVolunteers);
+    setMoneyCountingSessions(updatedSessions);
     checkScheduleConflicts();
   };
 
@@ -391,7 +511,7 @@ export function AdminPanel({
               }`}
             >
               <Calendar className="w-4 h-4 inline mr-2" />
-              Direct Assignment
+              Scheduling
             </button>
             <button
               onClick={() => setActiveTab('conflicts')}
@@ -426,698 +546,28 @@ export function AdminPanel({
         )}
 
         {activeTab === 'scheduling' && (
-          <DirectAssignmentInterface
+          <SchedulingManagement
             volunteers={volunteers}
             shifts={shifts}
             moneyCountingSessions={moneyCountingSessions}
-            selectedAssignmentBox={selectedAssignmentBox}
-            onSelectAssignmentBox={setSelectedAssignmentBox}
-            onDirectAssignment={handleDirectAssignment}
-            onRemoveAssignment={handleRemoveAssignment}
+            onAssignToShift={handleAssignToShift}
+            onRemoveFromShift={handleRemoveFromShift}
+            onAssignToMoneyCounter={handleAssignToMoneyCounter}
+            onRemoveFromMoneyCounter={handleRemoveFromMoneyCounter}
+            getAvailableVolunteersForAssignment={getAvailableVolunteersForAssignment}
+            onUpdateMoneyCountingSessions={setMoneyCountingSessions}
           />
         )}
 
         {activeTab === 'conflicts' && (
           <ConflictManagement conflicts={conflicts} volunteers={volunteers} />
         )}
-
-        {/* Assignment Modal */}
-        {selectedAssignmentBox && (
-          <AssignmentModal
-            assignmentBox={selectedAssignmentBox}
-            volunteers={volunteers}
-            shifts={shifts}
-            moneyCountingSessions={moneyCountingSessions}
-            onClose={() => setSelectedAssignmentBox(null)}
-            onDirectAssignment={handleDirectAssignment}
-            onRemoveAssignment={handleRemoveAssignment}
-          />
-        )}
       </div>
     </div>
   );
 }
 
-// Direct Assignment Interface Component
-function DirectAssignmentInterface({
-  volunteers,
-  shifts,
-  moneyCountingSessions,
-  selectedAssignmentBox,
-  onSelectAssignmentBox,
-  onDirectAssignment,
-  onRemoveAssignment
-}: {
-  volunteers: Volunteer[];
-  shifts: Shift[];
-  moneyCountingSessions: MoneyCountingSession[];
-  selectedAssignmentBox: any;
-  onSelectAssignmentBox: (box: any) => void;
-  onDirectAssignment: (volunteerId: string, type: string, details: any) => void;
-  onRemoveAssignment: (volunteerId: string, type: string, details: any) => void;
-}) {
-  const getShiftAssignments = (shiftId: number) => {
-    const boxWatchers = volunteers.filter(v => 
-      v.roles.some(role => role.type === 'box_watcher' && role.shift === shiftId)
-    );
-    const keymen = volunteers.filter(v => 
-      v.roles.some(role => role.type === 'keyman' && role.shift === shiftId)
-    );
-
-    return { boxWatchers, keymen };
-  };
-
-  const getShiftsByDay = () => {
-    const shiftsByDay: Record<string, Shift[]> = {};
-    shifts.forEach(shift => {
-      if (!shiftsByDay[shift.day]) {
-        shiftsByDay[shift.day] = [];
-      }
-      shiftsByDay[shift.day].push(shift);
-    });
-    return shiftsByDay;
-  };
-
-  const getMoneySessionsByDay = () => {
-    const sessionsByDay: Record<string, MoneyCountingSession[]> = {};
-    moneyCountingSessions.forEach(session => {
-      if (!sessionsByDay[session.day]) {
-        sessionsByDay[session.day] = [];
-      }
-      sessionsByDay[session.day].push(session);
-    });
-    return sessionsByDay;
-  };
-
-  const shiftsByDay = getShiftsByDay();
-  const sessionsByDay = getMoneySessionsByDay();
-  const days = ['Friday', 'Saturday', 'Sunday'];
-
-  return (
-    <div className="space-y-6">
-      {/* Direct Assignment Overview */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Click on any box to directly assign volunteers
-        </h3>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {days.map(day => (
-            <div key={day} className="space-y-4">
-              <div className={`p-4 rounded-lg border ${
-                day === 'Friday' ? 'bg-blue-50 border-blue-200' :
-                day === 'Saturday' ? 'bg-green-50 border-green-200' :
-                'bg-orange-50 border-orange-200'
-              }`}>
-                <h4 className={`font-semibold text-lg ${
-                  day === 'Friday' ? 'text-blue-900' :
-                  day === 'Saturday' ? 'text-green-900' :
-                  'text-orange-900'
-                }`}>{day}</h4>
-              </div>
-
-              {/* Shifts for this day */}
-              <div className="space-y-2">
-                <h5 className="font-medium text-gray-700 text-sm">Shifts</h5>
-                {shiftsByDay[day]?.map(shift => {
-                  const { boxWatchers, keymen } = getShiftAssignments(shift.id);
-                  const isComplete = boxWatchers.length === 10 && keymen.length === 3;
-                  
-                  return (
-                    <div
-                      key={shift.id}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
-                        isComplete
-                          ? 'border-green-200 bg-green-50 hover:bg-green-100'
-                          : 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100'
-                      }`}
-                      onClick={() => onSelectAssignmentBox({
-                        type: 'shift',
-                        id: shift.id,
-                        day: shift.day
-                      })}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <h6 className="font-medium text-gray-900 text-sm">Shift {shift.id}</h6>
-                        <div className="flex items-center space-x-1">
-                          <UserPlus className="w-4 h-4 text-gray-500" />
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            isComplete ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            Click to Assign
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <span>Box Watchers:</span>
-                          <span className={boxWatchers.length === 10 ? 'text-green-600' : 'text-yellow-600'}>
-                            {boxWatchers.length}/10
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Keymen:</span>
-                          <span className={keymen.length === 3 ? 'text-green-600' : 'text-yellow-600'}>
-                            {keymen.length}/3
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Money Counting Sessions for this day */}
-              <div className="space-y-2">
-                <h5 className="font-medium text-gray-700 text-sm">Money Counting</h5>
-                {sessionsByDay[day]?.map(session => {
-                  const assignedCount = session.assignedVolunteers.length;
-                  const brothersCount = session.assignedVolunteers.filter(vId => {
-                    const volunteer = volunteers.find(v => v.id === vId);
-                    return volunteer?.gender === 'male';
-                  }).length;
-                  const isComplete = assignedCount >= session.requiredCount && brothersCount >= session.minimumBrothers;
-                  
-                  return (
-                    <div
-                      key={session.id}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
-                        isComplete
-                          ? 'border-purple-200 bg-purple-50 hover:bg-purple-100'
-                          : 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100'
-                      }`}
-                      onClick={() => onSelectAssignmentBox({
-                        type: 'money_counter',
-                        id: session.id,
-                        day: session.day,
-                        time: session.time
-                      })}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <h6 className="font-medium text-gray-900 text-sm">
-                          {session.time === 'lunch' ? 'Lunch Time' : 'After Afternoon'}
-                        </h6>
-                        <div className="flex items-center space-x-1">
-                          <DollarSign className="w-4 h-4 text-purple-600" />
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            isComplete ? 'bg-purple-100 text-purple-800' : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            Click to Assign
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <span>Volunteers:</span>
-                          <span className={assignedCount >= session.requiredCount ? 'text-green-600' : 'text-yellow-600'}>
-                            {assignedCount}/{session.requiredCount}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Brothers:</span>
-                          <span className={brothersCount >= session.minimumBrothers ? 'text-green-600' : 'text-yellow-600'}>
-                            {brothersCount}/{session.minimumBrothers}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Assignment Modal Component
-function AssignmentModal({
-  assignmentBox,
-  volunteers,
-  shifts,
-  moneyCountingSessions,
-  onClose,
-  onDirectAssignment,
-  onRemoveAssignment
-}: {
-  assignmentBox: any;
-  volunteers: Volunteer[];
-  shifts: Shift[];
-  moneyCountingSessions: MoneyCountingSession[];
-  onClose: () => void;
-  onDirectAssignment: (volunteerId: string, type: string, details: any) => void;
-  onRemoveAssignment: (volunteerId: string, type: string, details: any) => void;
-}) {
-  if (assignmentBox.type === 'shift') {
-    return (
-      <ShiftAssignmentModal
-        shiftId={assignmentBox.id}
-        volunteers={volunteers}
-        shifts={shifts}
-        onClose={onClose}
-        onDirectAssignment={onDirectAssignment}
-        onRemoveAssignment={onRemoveAssignment}
-      />
-    );
-  } else {
-    return (
-      <MoneyCounterAssignmentModal
-        sessionId={assignmentBox.id}
-        volunteers={volunteers}
-        moneyCountingSessions={moneyCountingSessions}
-        onClose={onClose}
-        onDirectAssignment={onDirectAssignment}
-        onRemoveAssignment={onRemoveAssignment}
-      />
-    );
-  }
-}
-
-// Shift Assignment Modal
-function ShiftAssignmentModal({
-  shiftId,
-  volunteers,
-  shifts,
-  onClose,
-  onDirectAssignment,
-  onRemoveAssignment
-}: {
-  shiftId: number;
-  volunteers: Volunteer[];
-  shifts: Shift[];
-  onClose: () => void;
-  onDirectAssignment: (volunteerId: string, type: string, details: any) => void;
-  onRemoveAssignment: (volunteerId: string, type: string, details: any) => void;
-}) {
-  const shift = shifts.find(s => s.id === shiftId);
-  if (!shift) return null;
-
-  const assignedBoxWatchers = volunteers.filter(v => 
-    v.roles.some(role => role.type === 'box_watcher' && role.shift === shiftId)
-  );
-  
-  const assignedKeymen = volunteers.filter(v => 
-    v.roles.some(role => role.type === 'keyman' && role.shift === shiftId)
-  );
-
-  const availableForBoxWatcher = volunteers.filter(v => 
-    v.privileges.includes('box_watcher') && 
-    !v.roles.some(role => role.shift === shiftId)
-  );
-
-  const availableForKeyman = volunteers.filter(v => 
-    v.privileges.includes('keyman') && 
-    v.gender === 'male' &&
-    !v.roles.some(role => role.shift === shiftId)
-  );
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Assign Volunteers to {shift.name}
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-6">
-          {/* Box Watchers Section */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Box Watchers ({assignedBoxWatchers.length}/10)
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Current Assignments */}
-              <div>
-                <h4 className="font-medium text-gray-700 mb-3">Current Assignments</h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {Array.from({ length: 10 }, (_, i) => {
-                    const boxNumber = i + 1;
-                    const assignedVolunteer = assignedBoxWatchers.find(v => 
-                      v.roles.some(role => 
-                        role.type === 'box_watcher' && 
-                        role.shift === shiftId && 
-                        role.boxNumber === boxNumber
-                      )
-                    );
-
-                    return (
-                      <div key={boxNumber} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span className="font-medium">Box {boxNumber}:</span>
-                        {assignedVolunteer ? (
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm">
-                              {assignedVolunteer.firstName} {assignedVolunteer.lastName}
-                            </span>
-                            <button
-                              onClick={() => onRemoveAssignment(assignedVolunteer.id, 'shift', {
-                                shiftId,
-                                roleType: 'box_watcher'
-                              })}
-                              className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ) : (
-                          <select
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                onDirectAssignment(e.target.value, 'shift', {
-                                  shiftId,
-                                  roleType: 'box_watcher',
-                                  boxNumber
-                                });
-                                e.target.value = '';
-                              }
-                            }}
-                            className="text-sm px-2 py-1 border border-gray-300 rounded"
-                          >
-                            <option value="">Select Volunteer</option>
-                            {availableForBoxWatcher.map(volunteer => (
-                              <option key={volunteer.id} value={volunteer.id}>
-                                {volunteer.firstName} {volunteer.lastName}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Available Volunteers */}
-              <div>
-                <h4 className="font-medium text-gray-700 mb-3">
-                  Available Volunteers ({availableForBoxWatcher.length})
-                </h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {availableForBoxWatcher.map(volunteer => (
-                    <div key={volunteer.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <span className="text-sm">
-                        {volunteer.firstName} {volunteer.lastName}
-                        <span className={`ml-2 px-1 py-0.5 rounded text-xs ${
-                          volunteer.gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-                        }`}>
-                          {volunteer.gender === 'male' ? 'Bro' : 'Sis'}
-                        </span>
-                      </span>
-                      <select
-                        onChange={(e) => {
-                          const boxNumber = parseInt(e.target.value);
-                          if (boxNumber) {
-                            onDirectAssignment(volunteer.id, 'shift', {
-                              shiftId,
-                              roleType: 'box_watcher',
-                              boxNumber
-                            });
-                          }
-                        }}
-                        className="text-xs px-2 py-1 border border-gray-300 rounded"
-                      >
-                        <option value="">Assign to Box</option>
-                        {Array.from({ length: 10 }, (_, i) => i + 1).map(boxNum => {
-                          const isOccupied = assignedBoxWatchers.some(v => 
-                            v.roles.some(role => 
-                              role.type === 'box_watcher' && 
-                              role.shift === shiftId && 
-                              role.boxNumber === boxNum
-                            )
-                          );
-                          return !isOccupied ? (
-                            <option key={boxNum} value={boxNum}>Box {boxNum}</option>
-                          ) : null;
-                        })}
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Keymen Section */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Keymen ({assignedKeymen.length}/3)
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Current Assignments */}
-              <div>
-                <h4 className="font-medium text-gray-700 mb-3">Current Assignments</h4>
-                <div className="space-y-2">
-                  {Array.from({ length: 3 }, (_, i) => {
-                    const keymanNumber = i + 1;
-                    const assignedKeyman = assignedKeymen[i];
-
-                    return (
-                      <div key={keymanNumber} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span className="font-medium">Keyman {keymanNumber}:</span>
-                        {assignedKeyman ? (
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm">
-                              {assignedKeyman.firstName} {assignedKeyman.lastName}
-                            </span>
-                            <button
-                              onClick={() => onRemoveAssignment(assignedKeyman.id, 'shift', {
-                                shiftId,
-                                roleType: 'keyman'
-                              })}
-                              className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ) : (
-                          <select
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                onDirectAssignment(e.target.value, 'shift', {
-                                  shiftId,
-                                  roleType: 'keyman'
-                                });
-                                e.target.value = '';
-                              }
-                            }}
-                            className="text-sm px-2 py-1 border border-gray-300 rounded"
-                          >
-                            <option value="">Select Keyman</option>
-                            {availableForKeyman.map(volunteer => (
-                              <option key={volunteer.id} value={volunteer.id}>
-                                {volunteer.firstName} {volunteer.lastName}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Available Keymen */}
-              <div>
-                <h4 className="font-medium text-gray-700 mb-3">
-                  Available Keymen ({availableForKeyman.length})
-                </h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {availableForKeyman.map(volunteer => (
-                    <div key={volunteer.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <span className="text-sm">
-                        {volunteer.firstName} {volunteer.lastName}
-                        <span className="ml-2 px-1 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                          Bro
-                        </span>
-                      </span>
-                      <button
-                        onClick={() => onDirectAssignment(volunteer.id, 'shift', {
-                          shiftId,
-                          roleType: 'keyman'
-                        })}
-                        className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                        disabled={assignedKeymen.length >= 3}
-                      >
-                        Assign as Keyman
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Money Counter Assignment Modal
-function MoneyCounterAssignmentModal({
-  sessionId,
-  volunteers,
-  moneyCountingSessions,
-  onClose,
-  onDirectAssignment,
-  onRemoveAssignment
-}: {
-  sessionId: string;
-  volunteers: Volunteer[];
-  moneyCountingSessions: MoneyCountingSession[];
-  onClose: () => void;
-  onDirectAssignment: (volunteerId: string, type: string, details: any) => void;
-  onRemoveAssignment: (volunteerId: string, type: string, details: any) => void;
-}) {
-  const session = moneyCountingSessions.find(s => s.id === sessionId);
-  if (!session) return null;
-
-  const assignedVolunteers = volunteers.filter(v => 
-    session.assignedVolunteers.includes(v.id)
-  );
-
-  const availableVolunteers = volunteers.filter(v => 
-    v.privileges.includes('money_counter') && 
-    !session.assignedVolunteers.includes(v.id)
-  );
-
-  const brothersCount = assignedVolunteers.filter(v => v.gender === 'male').length;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Assign Money Counters - {session.day} {session.time === 'lunch' ? 'Lunch' : 'After Afternoon'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-6">
-          {/* Requirements Status */}
-          <div className="p-4 bg-purple-50 rounded-lg">
-            <h3 className="font-medium text-purple-900 mb-2">Requirements Status</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center justify-between">
-                <span>Total Volunteers:</span>
-                <span className={`font-medium ${
-                  assignedVolunteers.length >= session.requiredCount ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {assignedVolunteers.length}/{session.requiredCount}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Brothers Required:</span>
-                <span className={`font-medium ${
-                  brothersCount >= session.minimumBrothers ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {brothersCount}/{session.minimumBrothers}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Current Assignments */}
-            <div>
-              <h3 className="font-medium text-gray-900 mb-3">
-                Current Assignments ({assignedVolunteers.length})
-              </h3>
-              
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {assignedVolunteers.map(volunteer => (
-                  <div key={volunteer.id} className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm font-medium">
-                        {volunteer.firstName} {volunteer.lastName}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        volunteer.gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-                      }`}>
-                        {volunteer.gender === 'male' ? 'Bro' : 'Sis'}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => onRemoveAssignment(volunteer.id, 'money_counter', { sessionId })}
-                      className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-                
-                {assignedVolunteers.length === 0 && (
-                  <div className="text-center py-4 text-gray-500 text-sm">
-                    No volunteers assigned yet
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Available Volunteers */}
-            <div>
-              <h3 className="font-medium text-gray-900 mb-3">
-                Available Volunteers ({availableVolunteers.length})
-              </h3>
-              
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {availableVolunteers.map(volunteer => (
-                  <div key={volunteer.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm font-medium">
-                        {volunteer.firstName} {volunteer.lastName}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        volunteer.gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-                      }`}>
-                        {volunteer.gender === 'male' ? 'Bro' : 'Sis'}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => onDirectAssignment(volunteer.id, 'money_counter', { sessionId })}
-                      className="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700"
-                      disabled={assignedVolunteers.length >= session.requiredCount}
-                    >
-                      Assign
-                    </button>
-                  </div>
-                ))}
-                
-                {availableVolunteers.length === 0 && (
-                  <div className="text-center py-4 text-gray-500 text-sm">
-                    No available volunteers
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Volunteer Management Component (unchanged)
+// Volunteer Management Component
 function VolunteerManagement({
   volunteers,
   editingVolunteer,
@@ -1341,7 +791,572 @@ function VolunteerManagement({
   );
 }
 
-// Conflict Management Component (unchanged)
+// Scheduling Management Component
+function SchedulingManagement({
+  volunteers,
+  shifts,
+  moneyCountingSessions,
+  onAssignToShift,
+  onRemoveFromShift,
+  onAssignToMoneyCounter,
+  onRemoveFromMoneyCounter,
+  getAvailableVolunteersForAssignment,
+  onUpdateMoneyCountingSessions
+}: {
+  volunteers: Volunteer[];
+  shifts: Shift[];
+  moneyCountingSessions: MoneyCountingSession[];
+  onAssignToShift: (volunteerId: string, shiftId: number, roleType: 'keyman' | 'box_watcher', boxNumber?: number) => void;
+  onRemoveFromShift: (volunteerId: string, shiftId: number, roleType: 'keyman' | 'box_watcher') => void;
+  onAssignToMoneyCounter: (volunteerId: string, sessionId: string) => void;
+  onRemoveFromMoneyCounter: (volunteerId: string, sessionId: string) => void;
+  getAvailableVolunteersForAssignment: (assignmentType: 'shift' | 'money_counter', roleType?: 'keyman' | 'box_watcher', shiftId?: number, sessionId?: string) => Volunteer[];
+  onUpdateMoneyCountingSessions: (sessions: MoneyCountingSession[]) => void;
+}) {
+  const [selectedShift, setSelectedShift] = useState<number | null>(null);
+  const [selectedMoneySession, setSelectedMoneySession] = useState<string | null>(null);
+
+  const getShiftAssignments = (shiftId: number) => {
+    const boxWatchers = volunteers.filter(v => 
+      v.roles.some(role => role.type === 'box_watcher' && role.shift === shiftId)
+    );
+    const keymen = volunteers.filter(v => 
+      v.roles.some(role => role.type === 'keyman' && role.shift === shiftId)
+    );
+
+    return { boxWatchers, keymen };
+  };
+
+  const getShiftsByDay = () => {
+    const shiftsByDay: Record<string, Shift[]> = {};
+    shifts.forEach(shift => {
+      if (!shiftsByDay[shift.day]) {
+        shiftsByDay[shift.day] = [];
+      }
+      shiftsByDay[shift.day].push(shift);
+    });
+    return shiftsByDay;
+  };
+
+  const getMoneySessionsByDay = () => {
+    const sessionsByDay: Record<string, MoneyCountingSession[]> = {};
+    moneyCountingSessions.forEach(session => {
+      if (!sessionsByDay[session.day]) {
+        sessionsByDay[session.day] = [];
+      }
+      sessionsByDay[session.day].push(session);
+    });
+    return sessionsByDay;
+  };
+
+  const shiftsByDay = getShiftsByDay();
+  const sessionsByDay = getMoneySessionsByDay();
+  const days = ['Friday', 'Saturday', 'Sunday'];
+
+  return (
+    <div className="space-y-6">
+      {/* Combined Overview */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Assignment Overview</h3>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {days.map(day => (
+            <div key={day} className="space-y-4">
+              <div className={`p-4 rounded-lg border ${
+                day === 'Friday' ? 'bg-blue-50 border-blue-200' :
+                day === 'Saturday' ? 'bg-green-50 border-green-200' :
+                'bg-orange-50 border-orange-200'
+              }`}>
+                <h4 className={`font-semibold text-lg ${
+                  day === 'Friday' ? 'text-blue-900' :
+                  day === 'Saturday' ? 'text-green-900' :
+                  'text-orange-900'
+                }`}>{day}</h4>
+              </div>
+
+              {/* Shifts for this day */}
+              <div className="space-y-2">
+                <h5 className="font-medium text-gray-700 text-sm">Shifts</h5>
+                {shiftsByDay[day]?.map(shift => {
+                  const { boxWatchers, keymen } = getShiftAssignments(shift.id);
+                  const isComplete = boxWatchers.length === 10 && keymen.length === 3;
+                  
+                  return (
+                    <div
+                      key={shift.id}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                        isComplete
+                          ? 'border-green-200 bg-green-50'
+                          : 'border-yellow-200 bg-yellow-50'
+                      } ${selectedShift === shift.id ? 'ring-2 ring-teal-500' : ''}`}
+                      onClick={() => setSelectedShift(shift.id)}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <h6 className="font-medium text-gray-900 text-sm">Shift {shift.id}</h6>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          isComplete ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {isComplete ? 'Complete' : 'Incomplete'}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span>Box Watchers:</span>
+                          <span className={boxWatchers.length === 10 ? 'text-green-600' : 'text-yellow-600'}>
+                            {boxWatchers.length}/10
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Keymen:</span>
+                          <span className={keymen.length === 3 ? 'text-green-600' : 'text-yellow-600'}>
+                            {keymen.length}/3
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Money Counting Sessions for this day */}
+              <div className="space-y-2">
+                <h5 className="font-medium text-gray-700 text-sm">Money Counting</h5>
+                {sessionsByDay[day]?.map(session => {
+                  const assignedCount = session.assignedVolunteers.length;
+                  const brothersCount = session.assignedVolunteers.filter(vId => {
+                    const volunteer = volunteers.find(v => v.id === vId);
+                    return volunteer?.gender === 'male';
+                  }).length;
+                  const isComplete = assignedCount >= session.requiredCount && brothersCount >= session.minimumBrothers;
+                  
+                  return (
+                    <div
+                      key={session.id}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                        isComplete
+                          ? 'border-green-200 bg-green-50'
+                          : 'border-yellow-200 bg-yellow-50'
+                      } ${selectedMoneySession === session.id ? 'ring-2 ring-purple-500' : ''}`}
+                      onClick={() => setSelectedMoneySession(session.id)}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <h6 className="font-medium text-gray-900 text-sm">
+                          {session.time === 'lunch' ? 'Lunch Time' : 'After Afternoon'}
+                        </h6>
+                        <DollarSign className="w-4 h-4 text-purple-600" />
+                      </div>
+                      
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span>Volunteers:</span>
+                          <span className={assignedCount >= session.requiredCount ? 'text-green-600' : 'text-yellow-600'}>
+                            {assignedCount}/{session.requiredCount}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Brothers:</span>
+                          <span className={brothersCount >= session.minimumBrothers ? 'text-green-600' : 'text-yellow-600'}>
+                            {brothersCount}/{session.minimumBrothers}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Detailed Assignment View */}
+      {selectedShift && (
+        <ShiftDetailView
+          shift={shifts.find(s => s.id === selectedShift)!}
+          volunteers={volunteers}
+          onAssignToShift={onAssignToShift}
+          onRemoveFromShift={onRemoveFromShift}
+          getAvailableVolunteersForAssignment={getAvailableVolunteersForAssignment}
+        />
+      )}
+
+      {/* Money Counting Detail View */}
+      {selectedMoneySession && (
+        <MoneyCountingDetailView
+          session={moneyCountingSessions.find(s => s.id === selectedMoneySession)!}
+          volunteers={volunteers}
+          onAssignToMoneyCounter={onAssignToMoneyCounter}
+          onRemoveFromMoneyCounter={onRemoveFromMoneyCounter}
+          getAvailableVolunteersForAssignment={getAvailableVolunteersForAssignment}
+        />
+      )}
+    </div>
+  );
+}
+
+// Money Counting Detail View Component
+function MoneyCountingDetailView({
+  session,
+  volunteers,
+  onAssignToMoneyCounter,
+  onRemoveFromMoneyCounter,
+  getAvailableVolunteersForAssignment
+}: {
+  session: MoneyCountingSession;
+  volunteers: Volunteer[];
+  onAssignToMoneyCounter: (volunteerId: string, sessionId: string) => void;
+  onRemoveFromMoneyCounter: (volunteerId: string, sessionId: string) => void;
+  getAvailableVolunteersForAssignment: (assignmentType: 'shift' | 'money_counter', roleType?: 'keyman' | 'box_watcher', shiftId?: number, sessionId?: string) => Volunteer[];
+}) {
+  const assignedVolunteers = volunteers.filter(v => 
+    session.assignedVolunteers.includes(v.id)
+  );
+
+  const availableVolunteers = getAvailableVolunteersForAssignment('money_counter', undefined, undefined, session.id);
+  const brothersCount = assignedVolunteers.filter(v => v.gender === 'male').length;
+  const sistersCount = assignedVolunteers.filter(v => v.gender === 'female').length;
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+          <DollarSign className="w-5 h-5 mr-2 text-purple-600" />
+          {session.day} - {session.time === 'lunch' ? 'Lunch Time' : 'After Afternoon Session'} Money Counting
+        </h3>
+        <button
+          onClick={() => {}}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Current Assignments */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-gray-900">Current Assignments</h4>
+            <div className="text-sm text-gray-600">
+              {assignedVolunteers.length}/{session.requiredCount} volunteers
+              ({brothersCount}/{session.minimumBrothers} brothers required)
+            </div>
+          </div>
+          
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {assignedVolunteers.map(volunteer => (
+              <div key={volunteer.id} className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm font-medium">
+                    {volunteer.firstName} {volunteer.lastName}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    volunteer.gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                  }`}>
+                    {volunteer.gender === 'male' ? 'Bro' : 'Sis'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onRemoveFromMoneyCounter(volunteer.id, session.id)}
+                  className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            
+            {assignedVolunteers.length === 0 && (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                No volunteers assigned yet
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Available Volunteers (Automatically Filtered) */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-3">
+            Available Volunteers ({availableVolunteers.length})
+            <span className="text-xs text-gray-500 ml-2">
+              (Conflicts automatically removed)
+            </span>
+          </h4>
+          
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {availableVolunteers.map(volunteer => (
+              <div key={volunteer.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm font-medium">
+                    {volunteer.firstName} {volunteer.lastName}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    volunteer.gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                  }`}>
+                    {volunteer.gender === 'male' ? 'Bro' : 'Sis'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onAssignToMoneyCounter(volunteer.id, session.id)}
+                  className="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700"
+                >
+                  Assign
+                </button>
+              </div>
+            ))}
+            
+            {availableVolunteers.length === 0 && (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                No available volunteers without conflicts
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Requirements Status */}
+      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+        <h5 className="font-medium text-gray-900 mb-2">Requirements Status</h5>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center justify-between">
+            <span>Total Volunteers:</span>
+            <span className={`font-medium ${
+              assignedVolunteers.length >= session.requiredCount ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {assignedVolunteers.length}/{session.requiredCount}
+              {assignedVolunteers.length >= session.requiredCount && <CheckCircle className="w-4 h-4 inline ml-1" />}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Brothers Required:</span>
+            <span className={`font-medium ${
+              brothersCount >= session.minimumBrothers ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {brothersCount}/{session.minimumBrothers}
+              {brothersCount >= session.minimumBrothers && <CheckCircle className="w-4 h-4 inline ml-1" />}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Shift Detail View Component
+function ShiftDetailView({
+  shift,
+  volunteers,
+  onAssignToShift,
+  onRemoveFromShift,
+  getAvailableVolunteersForAssignment
+}: {
+  shift: Shift;
+  volunteers: Volunteer[];
+  onAssignToShift: (volunteerId: string, shiftId: number, roleType: 'keyman' | 'box_watcher', boxNumber?: number) => void;
+  onRemoveFromShift: (volunteerId: string, shiftId: number, roleType: 'keyman' | 'box_watcher') => void;
+  getAvailableVolunteersForAssignment: (assignmentType: 'shift' | 'money_counter', roleType?: 'keyman' | 'box_watcher', shiftId?: number, sessionId?: string) => Volunteer[];
+}) {
+  const assignedVolunteers = volunteers.filter(v => 
+    v.roles.some(role => role.shift === shift.id)
+  );
+
+  const availableForBoxWatcher = getAvailableVolunteersForAssignment('shift', 'box_watcher', shift.id);
+  const availableForKeyman = getAvailableVolunteersForAssignment('shift', 'keyman', shift.id);
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">
+          {shift.name} - Detailed Assignments
+        </h3>
+        <button
+          onClick={() => {}}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Current Assignments */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-3">Current Assignments</h4>
+          
+          <div className="space-y-3">
+            <div>
+              <h5 className="text-sm font-medium text-gray-700 mb-2">Box Watchers</h5>
+              <div className="space-y-1">
+                {Array.from({ length: 10 }, (_, i) => {
+                  const boxNumber = i + 1;
+                  const assignedVolunteer = assignedVolunteers.find(v => 
+                    v.roles.some(role => 
+                      role.type === 'box_watcher' && 
+                      role.shift === shift.id && 
+                      role.boxNumber === boxNumber
+                    )
+                  );
+
+                  return (
+                    <div key={boxNumber} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-sm">Box {boxNumber}:</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium">
+                          {assignedVolunteer 
+                            ? `${assignedVolunteer.firstName} ${assignedVolunteer.lastName}`
+                            : 'Unassigned'
+                          }
+                        </span>
+                        {assignedVolunteer && (
+                          <button
+                            onClick={() => onRemoveFromShift(assignedVolunteer.id, shift.id, 'box_watcher')}
+                            className="text-xs px-1 py-0.5 bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <h5 className="text-sm font-medium text-gray-700 mb-2">Keymen</h5>
+              <div className="space-y-1">
+                {Array.from({ length: 3 }, (_, i) => {
+                  const keymanNumber = i + 1;
+                  const assignedKeyman = assignedVolunteers.filter(v => 
+                    v.roles.some(role => role.type === 'keyman' && role.shift === shift.id)
+                  )[i];
+
+                  return (
+                    <div key={keymanNumber} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-sm">Keyman {keymanNumber}:</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium">
+                          {assignedKeyman 
+                            ? `${assignedKeyman.firstName} ${assignedKeyman.lastName}`
+                            : 'Unassigned'
+                          }
+                        </span>
+                        {assignedKeyman && (
+                          <button
+                            onClick={() => onRemoveFromShift(assignedKeyman.id, shift.id, 'keyman')}
+                            className="text-xs px-1 py-0.5 bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Available Volunteers (Automatically Filtered) */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-3">Available Volunteers</h4>
+          
+          <div className="space-y-4">
+            <div>
+              <h5 className="text-sm font-medium text-gray-700 mb-2">
+                Available for Box Watching ({availableForBoxWatcher.length})
+                <span className="text-xs text-gray-500 ml-2">
+                  (Conflicts automatically removed)
+                </span>
+              </h5>
+              <div className="max-h-40 overflow-y-auto space-y-1">
+                {availableForBoxWatcher.map(volunteer => (
+                  <div key={volunteer.id} className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                    <span className="text-sm">
+                      {volunteer.firstName} {volunteer.lastName}
+                      <span className={`ml-2 px-1 py-0.5 rounded text-xs ${
+                        volunteer.gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                      }`}>
+                        {volunteer.gender === 'male' ? 'Bro' : 'Sis'}
+                      </span>
+                    </span>
+                    <select
+                      onChange={(e) => {
+                        const boxNumber = parseInt(e.target.value);
+                        if (boxNumber) {
+                          onAssignToShift(volunteer.id, shift.id, 'box_watcher', boxNumber);
+                        }
+                      }}
+                      className="text-xs px-2 py-1 border border-gray-300 rounded"
+                      defaultValue=""
+                    >
+                      <option value="">Assign to Box</option>
+                      {Array.from({ length: 10 }, (_, i) => i + 1).map(boxNum => {
+                        const isBoxTaken = assignedVolunteers.some(v => 
+                          v.roles.some(role => 
+                            role.type === 'box_watcher' && 
+                            role.shift === shift.id && 
+                            role.boxNumber === boxNum
+                          )
+                        );
+                        return (
+                          <option key={boxNum} value={boxNum} disabled={isBoxTaken}>
+                            Box {boxNum} {isBoxTaken ? '(Taken)' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                ))}
+                {availableForBoxWatcher.length === 0 && (
+                  <div className="text-center py-2 text-gray-500 text-sm">
+                    No available volunteers without conflicts
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h5 className="text-sm font-medium text-gray-700 mb-2">
+                Available for Keyman ({availableForKeyman.length})
+                <span className="text-xs text-gray-500 ml-2">
+                  (Conflicts automatically removed)
+                </span>
+              </h5>
+              <div className="max-h-40 overflow-y-auto space-y-1">
+                {availableForKeyman.map(volunteer => (
+                  <div key={volunteer.id} className="flex items-center justify-between p-2 bg-green-50 rounded">
+                    <span className="text-sm">
+                      {volunteer.firstName} {volunteer.lastName}
+                      <span className="ml-2 px-1 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                        Bro
+                      </span>
+                    </span>
+                    <button
+                      onClick={() => onAssignToShift(volunteer.id, shift.id, 'keyman')}
+                      className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                      disabled={assignedVolunteers.filter(v => 
+                        v.roles.some(role => role.type === 'keyman' && role.shift === shift.id)
+                      ).length >= 3}
+                    >
+                      Assign as Keyman
+                    </button>
+                  </div>
+                ))}
+                {availableForKeyman.length === 0 && (
+                  <div className="text-center py-2 text-gray-500 text-sm">
+                    No available volunteers without conflicts
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Conflict Management Component
 function ConflictManagement({
   conflicts,
   volunteers
@@ -1385,6 +1400,9 @@ function ConflictManagement({
         <div className="text-center py-8">
           <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
           <p className="text-gray-600">No scheduling conflicts detected!</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Automatic conflict prevention is working perfectly.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
