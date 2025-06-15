@@ -9,13 +9,15 @@ interface HeaderProps {
 
 export function Header({ currentTime, activeShift, totalVolunteers }: HeaderProps) {
   const getSessionInfo = () => {
+    const conventionDates = 'July 11-13, 2025';
     const today = new Date();
     const dayOfWeek = today.getDay();
     
-    if (dayOfWeek === 5) return 'Friday';
-    if (dayOfWeek === 6) return 'Saturday';
-    if (dayOfWeek === 0) return 'Sunday';
-    return 'Convention';
+    // For demo purposes, we'll show the day based on current day
+    if (dayOfWeek === 5) return `Friday - ${conventionDates}`;
+    if (dayOfWeek === 6) return `Saturday - ${conventionDates}`;
+    if (dayOfWeek === 0) return `Sunday - ${conventionDates}`;
+    return `Convention - ${conventionDates}`;
   };
 
   return (
@@ -31,7 +33,7 @@ export function Header({ currentTime, activeShift, totalVolunteers }: HeaderProp
                 Convention Accounts
               </h1>
               <div className="text-sm text-gray-500">
-                {getSessionInfo()} Sessions
+                {getSessionInfo()}
               </div>
             </div>
           </div>
