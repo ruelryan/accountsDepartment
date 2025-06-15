@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Volunteer, Shift } from '../types';
 import { 
   User, 
@@ -14,7 +14,8 @@ import {
   Shield,
   ArrowLeft,
   Menu,
-  X
+  X,
+  Search
 } from 'lucide-react';
 import { FloorPlan } from './FloorPlan';
 import { boxes } from '../data/initialData';
@@ -27,9 +28,32 @@ interface EnhancedVolunteerPortalProps {
 
 export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: EnhancedVolunteerPortalProps) {
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filter volunteers based on search term
+  const filteredVolunteers = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return volunteers;
+    }
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    return volunteers.filter(volunteer => {
+      const fullName = `${volunteer.firstName} ${volunteer.lastName}`.toLowerCase();
+      const firstName = volunteer.firstName.toLowerCase();
+      const lastName = volunteer.lastName.toLowerCase();
+      
+      return fullName.includes(searchLower) || 
+             firstName.includes(searchLower) || 
+             lastName.includes(searchLower);
+    });
+  }, [volunteers, searchTerm]);
 
   const handleVolunteerSelect = (volunteer: Volunteer) => {
     setSelectedVolunteer(volunteer);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
   };
 
   if (selectedVolunteer) {
@@ -82,84 +106,147 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: En
           </div>
           <h2 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">Welcome, Volunteers!</h2>
           <p className="text-base sm:text-lg text-gray-600 mb-2">Find your assignment for the July 11-13, 2025 convention</p>
-          <p className="text-sm text-gray-500">Select your name below to view your detailed assignment information</p>
+          <p className="text-sm text-gray-500">Search for your name or select from the list below</p>
         </div>
 
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-8">
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 space-y-4 sm:space-y-0">
             <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">Find Your Assignment</h3>
             <div className="flex items-center space-x-2 text-sm text-gray-500">
               <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">{volunteers.length} volunteers registered</span>
-              <span className="sm:hidden">{volunteers.length}</span>
+              <span className="hidden sm:inline">
+                {filteredVolunteers.length} of {volunteers.length} volunteers
+                {searchTerm && filteredVolunteers.length !== volunteers.length && ' found'}
+              </span>
+              <span className="sm:hidden">
+                {filteredVolunteers.length}/{volunteers.length}
+              </span>
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-            {volunteers.map(volunteer => {
-              const hasMultipleRoles = volunteer.roles.length > 1;
-              const primaryRole = volunteer.roles[0];
-              
-              return (
+
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative max-w-md mx-auto">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base"
+                placeholder="Search by first name or last name..."
+              />
+              {searchTerm && (
                 <button
-                  key={volunteer.id}
-                  onClick={() => handleVolunteerSelect(volunteer)}
-                  className="p-4 sm:p-5 text-left border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-all group hover:shadow-lg transform hover:scale-[1.02] bg-white/60 backdrop-blur-sm"
+                  onClick={clearSearch}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
-                  <div className="flex items-center space-x-3 mb-3 sm:mb-4">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-                      <span className="text-white font-bold text-xs sm:text-sm">
-                        {volunteer.firstName[0]}{volunteer.lastName[0]}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 group-hover:text-teal-700 truncate text-sm sm:text-base">
-                        {volunteer.firstName} {volunteer.lastName}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          volunteer.gender === 'male' 
-                            ? 'bg-blue-100 text-blue-700' 
-                            : 'bg-pink-100 text-pink-700'
-                        }`}>
-                          {volunteer.gender === 'male' ? 'Brother' : 'Sister'}
-                        </span>
-                        {hasMultipleRoles && (
-                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                            Multiple
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {volunteer.roles.slice(0, 2).map((role, index) => (
-                      <div key={index} className="flex items-center justify-between text-xs sm:text-sm">
-                        <span className="text-gray-600 capitalize font-medium truncate">
-                          {role.type.replace('_', ' ')}
-                        </span>
-                        {role.day && (
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ml-2 ${
-                            role.day === 'Friday' ? 'bg-blue-100 text-blue-700' :
-                            role.day === 'Saturday' ? 'bg-green-100 text-green-700' :
-                            'bg-orange-100 text-orange-700'
-                          }`}>
-                            {role.day}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                    {volunteer.roles.length > 2 && (
-                      <div className="text-xs text-gray-500 font-medium">
-                        +{volunteer.roles.length - 2} more
-                      </div>
-                    )}
-                  </div>
+                  <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                 </button>
-              );
-            })}
+              )}
+            </div>
+            
+            {searchTerm && (
+              <div className="text-center mt-2">
+                <span className="text-sm text-gray-600">
+                  {filteredVolunteers.length === 0 
+                    ? `No volunteers found matching "${searchTerm}"`
+                    : `Found ${filteredVolunteers.length} volunteer${filteredVolunteers.length !== 1 ? 's' : ''} matching "${searchTerm}"`
+                  }
+                </span>
+                {filteredVolunteers.length === 0 && (
+                  <button
+                    onClick={clearSearch}
+                    className="ml-2 text-teal-600 hover:text-teal-700 font-medium text-sm"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+          
+          {/* Volunteers Grid */}
+          {filteredVolunteers.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+              {filteredVolunteers.map(volunteer => {
+                const hasMultipleRoles = volunteer.roles.length > 1;
+                const primaryRole = volunteer.roles[0];
+                
+                return (
+                  <button
+                    key={volunteer.id}
+                    onClick={() => handleVolunteerSelect(volunteer)}
+                    className="p-4 sm:p-5 text-left border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-all group hover:shadow-lg transform hover:scale-[1.02] bg-white/60 backdrop-blur-sm"
+                  >
+                    <div className="flex items-center space-x-3 mb-3 sm:mb-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                        <span className="text-white font-bold text-xs sm:text-sm">
+                          {volunteer.firstName[0]}{volunteer.lastName[0]}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 group-hover:text-teal-700 truncate text-sm sm:text-base">
+                          {volunteer.firstName} {volunteer.lastName}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            volunteer.gender === 'male' 
+                              ? 'bg-blue-100 text-blue-700' 
+                              : 'bg-pink-100 text-pink-700'
+                          }`}>
+                            {volunteer.gender === 'male' ? 'Brother' : 'Sister'}
+                          </span>
+                          {hasMultipleRoles && (
+                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                              Multiple
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {volunteer.roles.slice(0, 2).map((role, index) => (
+                        <div key={index} className="flex items-center justify-between text-xs sm:text-sm">
+                          <span className="text-gray-600 capitalize font-medium truncate">
+                            {role.type.replace('_', ' ')}
+                          </span>
+                          {role.day && (
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ml-2 ${
+                              role.day === 'Friday' ? 'bg-blue-100 text-blue-700' :
+                              role.day === 'Saturday' ? 'bg-green-100 text-green-700' :
+                              'bg-orange-100 text-orange-700'
+                            }`}>
+                              {role.day}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                      {volunteer.roles.length > 2 && (
+                        <div className="text-xs text-gray-500 font-medium">
+                          +{volunteer.roles.length - 2} more
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : searchTerm ? (
+            <div className="text-center py-12">
+              <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No volunteers found</h3>
+              <p className="text-gray-600 mb-4">Try searching with a different name or check the spelling.</p>
+              <button
+                onClick={clearSearch}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium"
+              >
+                Show All Volunteers
+              </button>
+            </div>
+          ) : null}
         </div>
 
         {/* Quick Info Section */}
