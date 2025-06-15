@@ -44,121 +44,120 @@ export function FloorPlan({ boxes, onBoxClick }: FloorPlanProps) {
         </div>
       </div>
 
-      {/* Floor Plan Container */}
-      <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 overflow-hidden" style={{ height: '600px' }}>
-        
-        {/* Stage Area */}
-        <div className="absolute left-6 top-12 bottom-12 w-28 bg-gradient-to-b from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg border border-blue-400">
-          <div className="text-white font-bold text-sm text-center transform -rotate-90 tracking-wider">
-            STAGE
-          </div>
-        </div>
-
-        {/* Accounts Department Area */}
-        <div className="absolute right-6 top-12 w-32 space-y-3">
-          <div className="w-full h-16 bg-gradient-to-r from-orange-200 to-orange-300 border-2 border-orange-400 rounded-lg flex items-center justify-center shadow-md">
-            <div className="text-xs font-bold text-orange-900 text-center leading-tight">
-              BOX STORAGE
+      {/* Scrollable Floor Plan Container */}
+      <div className="overflow-x-auto overflow-y-hidden">
+        <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200" style={{ width: '800px', height: '500px', minWidth: '800px' }}>
+          
+          {/* Stage Area */}
+          <div className="absolute left-6 top-12 bottom-12 w-28 bg-gradient-to-b from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg border border-blue-400">
+            <div className="text-white font-bold text-sm text-center transform -rotate-90 tracking-wider">
+              STAGE
             </div>
           </div>
-          <div className="w-full h-16 bg-gradient-to-r from-purple-200 to-purple-300 border-2 border-purple-400 rounded-lg flex items-center justify-center shadow-md">
-            <div className="text-xs font-bold text-purple-900 text-center leading-tight">
-              COUNTING<br />TABLE
+
+          {/* Accounts Department Area */}
+          <div className="absolute right-6 top-12 w-32 space-y-3">
+            <div className="w-full h-16 bg-gradient-to-r from-orange-200 to-orange-300 border-2 border-orange-400 rounded-lg flex items-center justify-center shadow-md">
+              <div className="text-xs font-bold text-orange-900 text-center leading-tight">
+                BOX STORAGE
+              </div>
+            </div>
+            <div className="w-full h-16 bg-gradient-to-r from-purple-200 to-purple-300 border-2 border-purple-400 rounded-lg flex items-center justify-center shadow-md">
+              <div className="text-xs font-bold text-purple-900 text-center leading-tight">
+                COUNTING<br />TABLE
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Main Seating Area Outline */}
-        <div className="absolute left-40 right-44 top-16 bottom-16 border-2 border-dashed border-gray-300 rounded-lg bg-white/30">
-          <div className="absolute top-2 left-2 text-xs text-gray-500 font-medium">Main Seating Area</div>
-        </div>
-
-        {/* Box Grid Layout */}
-        <div className="absolute left-48 right-52 top-24 bottom-24">
-          {/* Row 1 - Top */}
-          <div className="absolute top-0 left-0 right-0 flex justify-between items-center">
-            <BoxPosition 
-              boxId={1} 
-              box={boxes.find(b => b.id === 1)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-            />
-            <BoxPosition 
-              boxId={5} 
-              box={boxes.find(b => b.id === 5)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-            />
-            <BoxPosition 
-              boxId={8} 
-              box={boxes.find(b => b.id === 8)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-              isEntrance={true}
-            />
+          {/* Main Seating Area Outline */}
+          <div className="absolute left-40 right-44 top-16 bottom-16 border-2 border-dashed border-gray-300 rounded-lg bg-white/30">
+            <div className="absolute top-2 left-2 text-xs text-gray-500 font-medium">Main Seating Area</div>
           </div>
 
-          {/* Row 2 - Middle */}
-          <div className="absolute top-1/2 left-0 right-0 flex justify-between items-center transform -translate-y-1/2">
-            <BoxPosition 
-              boxId={2} 
-              box={boxes.find(b => b.id === 2)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-            />
-            <BoxPosition 
-              boxId={4} 
-              box={boxes.find(b => b.id === 4)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-            />
-            <BoxPosition 
-              boxId={7} 
-              box={boxes.find(b => b.id === 7)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-            />
-            <BoxPosition 
-              boxId={9} 
-              box={boxes.find(b => b.id === 9)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-              isEntrance={true}
-            />
+          {/* Box Grid Layout */}
+          <div className="absolute left-48 right-52 top-24 bottom-24">
+            {/* Row 1 - Top */}
+            <div className="absolute top-0 left-0 right-0 flex justify-between items-center">
+              <BoxPosition 
+                boxId={1} 
+                box={boxes.find(b => b.id === 1)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+              />
+              <BoxPosition 
+                boxId={5} 
+                box={boxes.find(b => b.id === 5)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+              />
+              <BoxPosition 
+                boxId={8} 
+                box={boxes.find(b => b.id === 8)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+                isEntrance={true}
+              />
+            </div>
+
+            {/* Row 2 - Middle */}
+            <div className="absolute top-1/2 left-0 right-0 flex justify-between items-center transform -translate-y-1/2">
+              <BoxPosition 
+                boxId={2} 
+                box={boxes.find(b => b.id === 2)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+              />
+              <BoxPosition 
+                boxId={4} 
+                box={boxes.find(b => b.id === 4)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+              />
+              <BoxPosition 
+                boxId={7} 
+                box={boxes.find(b => b.id === 7)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+              />
+              <BoxPosition 
+                boxId={9} 
+                box={boxes.find(b => b.id === 9)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+                isEntrance={true}
+              />
+            </div>
+
+            {/* Row 3 - Bottom */}
+            <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center">
+              <BoxPosition 
+                boxId={3} 
+                box={boxes.find(b => b.id === 3)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+              />
+              <BoxPosition 
+                boxId={6} 
+                box={boxes.find(b => b.id === 6)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+              />
+              <BoxPosition 
+                boxId={10} 
+                box={boxes.find(b => b.id === 10)} 
+                onBoxClick={onBoxClick}
+                getBoxStatusColor={getBoxStatusColor}
+                isEntrance={true}
+              />
+            </div>
           </div>
 
-          {/* Row 3 - Bottom */}
-          <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center">
-            <BoxPosition 
-              boxId={3} 
-              box={boxes.find(b => b.id === 3)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-            />
-            <BoxPosition 
-              boxId={6} 
-              box={boxes.find(b => b.id === 6)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-            />
-            <BoxPosition 
-              boxId={10} 
-              box={boxes.find(b => b.id === 10)} 
-              onBoxClick={onBoxClick}
-              getBoxStatusColor={getBoxStatusColor}
-              isEntrance={true}
-            />
-          </div>
         </div>
+      </div>
 
-        {/* Directional Indicators */}
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 font-medium bg-white/80 px-2 py-1 rounded">
-          Front of Hall
-        </div>
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 font-medium bg-white/80 px-2 py-1 rounded">
-          Back of Hall
-        </div>
-
+      {/* Mobile Scroll Hint */}
+      <div className="mt-2 text-xs text-gray-500 text-center sm:hidden">
+        ← Scroll horizontally to view full floor plan →
       </div>
 
       {/* Box Assignment Summary */}
@@ -202,13 +201,13 @@ interface BoxPositionProps {
 function BoxPosition({ boxId, box, onBoxClick, getBoxStatusColor, isEntrance }: BoxPositionProps) {
   return (
     <button
-      className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-lg flex flex-col items-center justify-center font-bold text-white ${
+      className={`w-16 h-16 rounded-full border-3 cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-lg flex flex-col items-center justify-center font-bold text-white ${
         getBoxStatusColor(box?.status || 'assigned')
       } shadow-lg`}
       onClick={() => onBoxClick(boxId)}
       title={`Box #${boxId}${isEntrance ? ' (Entrance/Exit)' : ''} - ${box?.status || 'assigned'}`}
     >
-      <div className="text-lg sm:text-xl font-bold leading-none">{boxId}</div>
+      <div className="text-xl font-bold leading-none">{boxId}</div>
       {isEntrance && (
         <div className="text-xs font-semibold leading-none mt-0.5 opacity-90">E</div>
       )}
