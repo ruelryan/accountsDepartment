@@ -10,6 +10,15 @@ interface FloorPlanProps {
 export function FloorPlan({ boxes, onBoxClick }: FloorPlanProps) {
   const getBoxStatusColor = (status: string) => {
     switch (status) {
+      case 'active': return 'bg-green-500 border-green-600';
+      case 'returned': return 'bg-gray-400 border-gray-500';
+      case 'needs_attention': return 'bg-red-500 border-red-600';
+      default: return 'bg-yellow-500 border-yellow-600';
+    }
+  };
+
+  const getBoxStatusDotColor = (status: string) => {
+    switch (status) {
       case 'active': return 'bg-green-500';
       case 'returned': return 'bg-gray-400';
       case 'needs_attention': return 'bg-red-500';
@@ -18,11 +27,11 @@ export function FloorPlan({ boxes, onBoxClick }: FloorPlanProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-4">
+    <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
         <div className="flex items-center">
           <MapPin className="w-4 h-4 text-gray-400 mr-2" />
-          <h3 className="font-medium text-gray-900 text-sm sm:text-base">Floor Plan</h3>
+          <h3 className="font-medium text-gray-900 text-sm sm:text-base">Convention Hall Floor Plan</h3>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
           <div className="flex items-center space-x-1">
@@ -37,47 +46,175 @@ export function FloorPlan({ boxes, onBoxClick }: FloorPlanProps) {
             <div className="w-2 h-2 bg-red-500 rounded-full"></div>
             <span className="text-gray-500">Attention</span>
           </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+            <span className="text-gray-500">Returned</span>
+          </div>
         </div>
       </div>
 
-      <div className="relative bg-gray-50 rounded border overflow-hidden">
-        <img 
-          src="/Floorplan.jpg" 
-          alt="Convention Hall Floor Plan" 
-          className="w-full h-auto"
-        />
+      {/* Custom Floor Plan Layout */}
+      <div className="relative bg-gray-50 rounded-lg border-2 border-gray-300 p-4 sm:p-8" style={{ minHeight: '500px' }}>
         
-        <div className="absolute inset-0">
-          {/* Box positions based on floor plan */}
-          {[
-            { id: 1, top: '36%', left: '37%' },
-            { id: 2, top: '36%', left: '50%' },
-            { id: 3, top: '36%', left: '63%' },
-            { id: 4, top: '58%', left: '37%' },
-            { id: 5, top: '62%', left: '50%' },
-            { id: 6, top: '58%', left: '63%' },
-            { id: 7, top: '84%', left: '37%' },
-            { id: 8, top: '84%', left: '50%' },
-            { id: 9, top: '84%', left: '63%' },
-            { id: 10, top: '58%', left: '88%' }
-          ].map(({ id, top, left }) => {
-            const box = boxes.find(b => b.id === id);
-            return (
-              <button
-                key={id}
-                className={`absolute w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white cursor-pointer transition-all hover:scale-125 shadow-sm ${getBoxStatusColor(box?.status || 'assigned')}`}
-                style={{ top, left, transform: 'translate(-50%, -50%)' }}
-                onClick={() => onBoxClick(id)}
-                title={`Box #${id}`}
-              >
-                <div className="absolute -bottom-3 sm:-bottom-4 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-700 bg-white px-1 rounded shadow-sm">
-                  {id}
-                </div>
-              </button>
-            );
-          })}
+        {/* Stage Area */}
+        <div className="absolute left-4 top-8 bottom-8 w-24 sm:w-32 bg-blue-400 rounded-lg flex items-center justify-center shadow-lg">
+          <div className="text-white font-bold text-xs sm:text-sm text-center transform -rotate-90">
+            STAGE
+          </div>
         </div>
+
+        {/* Left Exit Arrow */}
+        <div className="absolute left-2 top-6 text-xs font-bold text-gray-700">
+          ← EXIT
+        </div>
+        <div className="absolute left-2 bottom-6 text-xs font-bold text-gray-700">
+          ← EXIT
+        </div>
+
+        {/* Right Side Labels */}
+        <div className="absolute right-2 top-4 text-xs font-bold text-gray-700 transform rotate-90 origin-center">
+          ← ENTRANCE
+        </div>
+        <div className="absolute right-2 top-12 text-xs font-bold text-gray-700 transform rotate-90 origin-center">
+          → EXIT
+        </div>
+
+        {/* Box Empty Storage */}
+        <div className="absolute right-4 top-8 w-20 sm:w-24 h-12 sm:h-16 bg-orange-200 border border-orange-400 rounded flex items-center justify-center">
+          <div className="text-xs font-bold text-orange-800 text-center leading-tight">
+            BOX EMPTY<br />STORAGE
+          </div>
+        </div>
+
+        {/* Counting Table */}
+        <div className="absolute right-4 top-24 w-20 sm:w-24 h-12 sm:h-16 bg-orange-200 border border-orange-400 rounded flex items-center justify-center">
+          <div className="text-xs font-bold text-orange-800 text-center leading-tight">
+            COUNTING<br />TABLE
+          </div>
+        </div>
+
+        {/* Right Side Entrance/Exit */}
+        <div className="absolute right-2 bottom-4 text-xs font-bold text-gray-700 transform rotate-90 origin-center">
+          ← ENTRANCE
+        </div>
+        <div className="absolute right-2 bottom-12 text-xs font-bold text-gray-700 transform rotate-90 origin-center">
+          ↑ ↓ EXIT
+        </div>
+
+        {/* Box Positions - Row 1 (Top) */}
+        <BoxPosition 
+          boxId={1} 
+          box={boxes.find(b => b.id === 1)} 
+          position={{ left: '200px', top: '60px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+        />
+        <BoxPosition 
+          boxId={5} 
+          box={boxes.find(b => b.id === 5)} 
+          position={{ left: '320px', top: '60px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+        />
+        <BoxPosition 
+          boxId={8} 
+          box={boxes.find(b => b.id === 8)} 
+          position={{ left: '440px', top: '60px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+          isEntrance={true}
+        />
+
+        {/* Box Positions - Row 2 (Middle) */}
+        <BoxPosition 
+          boxId={2} 
+          box={boxes.find(b => b.id === 2)} 
+          position={{ left: '200px', top: '180px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+        />
+        <BoxPosition 
+          boxId={4} 
+          box={boxes.find(b => b.id === 4)} 
+          position={{ left: '280px', top: '180px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+        />
+        <BoxPosition 
+          boxId={7} 
+          box={boxes.find(b => b.id === 7)} 
+          position={{ left: '360px', top: '180px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+        />
+        <BoxPosition 
+          boxId={9} 
+          box={boxes.find(b => b.id === 9)} 
+          position={{ left: '440px', top: '180px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+          isEntrance={true}
+        />
+
+        {/* Box Positions - Row 3 (Bottom) */}
+        <BoxPosition 
+          boxId={3} 
+          box={boxes.find(b => b.id === 3)} 
+          position={{ left: '200px', top: '300px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+        />
+        <BoxPosition 
+          boxId={6} 
+          box={boxes.find(b => b.id === 6)} 
+          position={{ left: '320px', top: '300px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+        />
+        <BoxPosition 
+          boxId={10} 
+          box={boxes.find(b => b.id === 10)} 
+          position={{ left: '440px', top: '300px' }} 
+          onBoxClick={onBoxClick}
+          getBoxStatusColor={getBoxStatusColor}
+          isEntrance={true}
+        />
+
       </div>
     </div>
   );
 }
+
+interface BoxPositionProps {
+  boxId: number;
+  box?: Box;
+  position: { left: string; top: string };
+  onBoxClick: (boxId: number) => void;
+  getBoxStatusColor: (status: string) => string;
+  isEntrance?: boolean;
+}
+
+function BoxPosition({ boxId, box, position, onBoxClick, getBoxStatusColor, isEntrance }: BoxPositionProps) {
+  return (
+    <button
+      className={`absolute w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 cursor-pointer transition-all hover:scale-110 shadow-lg flex items-center justify-center font-bold text-white ${
+        getBoxStatusColor(box?.status || 'assigned')
+      }`}
+      style={{ 
+        left: position.left, 
+        top: position.top,
+        transform: 'translate(-50%, -50%)'
+      }}
+      onClick={() => onBoxClick(boxId)}
+      title={`Box #${boxId}${isEntrance ? ' (Entrance/Exit)' : ''}`}
+    >
+      <div className="text-center">
+        <div className="text-sm sm:text-lg font-bold">{boxId}</div>
+        {isEntrance && (
+          <div className="text-xs leading-none">E</div>
+        )}
+      </div>
+    </button>
+  );
+}
+</BoxPosition>

@@ -157,7 +157,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Bersano', 
     lastName: 'Keziah', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 1, location: 'Box Assignment', day: 'Friday' }], 
+    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 1, location: 'Main Hall', day: 'Friday' }], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
@@ -166,7 +166,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Malaki', 
     lastName: 'Coney Rea', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 2, location: 'Box Assignment', day: 'Friday' }], 
+    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 2, location: 'Main Hall', day: 'Friday' }], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
@@ -175,7 +175,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Razon', 
     lastName: 'Gina', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 3, location: 'Box Assignment', day: 'Friday' }], 
+    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 3, location: 'Main Hall', day: 'Friday' }], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
@@ -184,7 +184,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Salinas', 
     lastName: 'Vanessa', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 4, location: 'Box Assignment', day: 'Friday' }], 
+    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 4, location: 'Main Hall', day: 'Friday' }], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
@@ -193,7 +193,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Agulto', 
     lastName: 'Aliah', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 5, location: 'Box Assignment', day: 'Friday' }], 
+    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 5, location: 'Main Hall', day: 'Friday' }], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
@@ -202,7 +202,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Pariñas', 
     lastName: 'Nicole', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 6, location: 'Box Assignment', day: 'Friday' }], 
+    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 6, location: 'Main Hall', day: 'Friday' }], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
@@ -211,7 +211,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Clemente', 
     lastName: 'Analyn', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 7, location: 'Box Assignment', day: 'Friday' }], 
+    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 7, location: 'Main Hall', day: 'Friday' }], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
@@ -312,13 +312,13 @@ export const volunteers: Volunteer[] = [
 ];
 
 export const boxes: Box[] = [
-  { id: 1, location: 'Box Assignment', isAtEntrance: false, status: 'assigned', currentShift: 1 },
-  { id: 2, location: 'Box Assignment', isAtEntrance: false, status: 'assigned', currentShift: 1 },
-  { id: 3, location: 'Box Assignment', isAtEntrance: false, status: 'assigned', currentShift: 1 },
-  { id: 4, location: 'Box Assignment', isAtEntrance: false, status: 'assigned', currentShift: 1 },
-  { id: 5, location: 'Box Assignment', isAtEntrance: false, status: 'assigned', currentShift: 1 },
-  { id: 6, location: 'Box Assignment', isAtEntrance: false, status: 'assigned', currentShift: 1 },
-  { id: 7, location: 'Box Assignment', isAtEntrance: false, status: 'assigned', currentShift: 1 },
+  { id: 1, location: 'Main Hall', isAtEntrance: false, status: 'assigned', currentShift: 1 },
+  { id: 2, location: 'Main Hall', isAtEntrance: false, status: 'assigned', currentShift: 1 },
+  { id: 3, location: 'Main Hall', isAtEntrance: false, status: 'assigned', currentShift: 1 },
+  { id: 4, location: 'Main Hall', isAtEntrance: false, status: 'assigned', currentShift: 1 },
+  { id: 5, location: 'Main Hall', isAtEntrance: false, status: 'assigned', currentShift: 1 },
+  { id: 6, location: 'Main Hall', isAtEntrance: false, status: 'assigned', currentShift: 1 },
+  { id: 7, location: 'Main Hall', isAtEntrance: false, status: 'assigned', currentShift: 1 },
   { id: 8, location: 'Entrance/Exit', isAtEntrance: true, status: 'assigned', currentShift: 1 },
   { id: 9, location: 'Entrance/Exit', isAtEntrance: true, status: 'assigned', currentShift: 1 },
   { id: 10, location: 'Entrance/Exit', isAtEntrance: true, status: 'assigned', currentShift: 1 }
