@@ -651,11 +651,11 @@ function AssignmentOverview({
               <h4 className="font-medium text-gray-900 mb-3 capitalize text-sm sm:text-base">
                 {role.type.replace('_', ' ')} Instructions
               </h4>
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-2">
                 {instructions.map((instruction, i) => (
                   <div key={i} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                     <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">{instruction}</span>
+                    <span className="text-sm text-gray-700 leading-relaxed">{instruction}</span>
                   </div>
                 ))}
               </div>
