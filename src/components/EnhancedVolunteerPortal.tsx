@@ -52,7 +52,7 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: En
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Convention Accounts</h1>
-                <p className="text-sm text-gray-600">Volunteer Portal</p>
+                <p className="text-sm text-gray-600">July 11-13, 2025 • Volunteer Portal</p>
               </div>
             </div>
             
@@ -77,7 +77,7 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: En
             </div>
           </div>
           <h2 className="text-4xl font-bold text-gray-900 mb-3">Welcome, Volunteers!</h2>
-          <p className="text-lg text-gray-600 mb-2">Find your assignment for the convention</p>
+          <p className="text-lg text-gray-600 mb-2">Find your assignment for the July 11-13, 2025 convention</p>
           <p className="text-sm text-gray-500">Select your name below to view your detailed assignment information</p>
         </div>
 
@@ -164,9 +164,9 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: En
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-blue-600" />
               </div>
-              <h4 className="font-semibold text-gray-900">Convention Days</h4>
+              <h4 className="font-semibold text-gray-900">Convention Dates</h4>
             </div>
-            <p className="text-sm text-gray-600">Friday, Saturday & Sunday sessions with multiple shifts throughout each day.</p>
+            <p className="text-sm text-gray-600">July 11-13, 2025 (Friday-Sunday) with multiple shifts throughout each day.</p>
           </div>
 
           <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/20">
@@ -292,7 +292,7 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onAdminLogin }: Volunte
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Convention Accounts</h1>
-                <p className="text-sm text-gray-600">Volunteer Portal</p>
+                <p className="text-sm text-gray-600">July 11-13, 2025 • Volunteer Portal</p>
               </div>
             </div>
             
@@ -333,6 +333,9 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onAdminLogin }: Volunte
                   </span>
                   <span className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm font-medium">
                     {volunteer.roles.length} Assignment{volunteer.roles.length !== 1 ? 's' : ''}
+                  </span>
+                  <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                    July 11-13, 2025
                   </span>
                 </div>
               </div>
@@ -476,7 +479,7 @@ function AssignmentOverview({
                 {shift && (
                   <div className="p-4 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg border border-teal-200">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-teal-900">Schedule</h4>
+                      <h4 className="font-semibold text-teal-900">{shift.name}</h4>
                       <Clock className="w-4 h-4 text-teal-600" />
                     </div>
                     <div className="space-y-1 text-sm">
@@ -555,12 +558,18 @@ function FullScheduleView({
     <div className="space-y-6">
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-6">Your Complete Convention Schedule</h3>
+        <p className="text-sm text-gray-600 mb-6">July 11-13, 2025 Convention Schedule</p>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {days.map(day => (
             <div key={day} className="space-y-4">
               <div className={`p-4 rounded-lg border ${getDayColor(day)}`}>
                 <h4 className="font-semibold text-lg">{day}</h4>
+                <p className="text-sm opacity-75">
+                  {day === 'Friday' ? 'July 11, 2025' : 
+                   day === 'Saturday' ? 'July 12, 2025' : 
+                   'July 13, 2025'}
+                </p>
               </div>
               
               <div className="space-y-3">
@@ -601,13 +610,18 @@ function FullScheduleView({
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
           <Calendar className="w-5 h-5 mr-2 text-teal-600" />
-          Convention Schedule Overview
+          Convention Schedule Overview - July 11-13, 2025
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {days.map(day => (
             <div key={day} className={`p-4 rounded-lg border ${getDayColor(day)}`}>
               <h4 className="font-semibold mb-2">{day}</h4>
+              <p className="text-xs opacity-75 mb-2">
+                {day === 'Friday' ? 'July 11, 2025' : 
+                 day === 'Saturday' ? 'July 12, 2025' : 
+                 'July 13, 2025'}
+              </p>
               <div className="text-sm space-y-1">
                 <div>Morning Session</div>
                 <div>Noon Intermission</div>
@@ -630,7 +644,7 @@ function FloorPlanView({ volunteer }: { volunteer: Volunteer }) {
   return (
     <div className="space-y-6">
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">Your Box Assignments</h3>
+        <h3 className="text-xl font-semibold text-gray-900 mb-4">Your Box Assignments - July 11-13, 2025</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {volunteer.roles.filter(role => role.boxNumber).map((role, index) => (
