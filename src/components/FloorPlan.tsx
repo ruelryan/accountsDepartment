@@ -63,22 +63,6 @@ export function FloorPlan({ boxes, onBoxClick }: FloorPlanProps) {
           </div>
         </div>
 
-        {/* Left Exit Arrow */}
-        <div className="absolute left-2 top-6 text-xs font-bold text-gray-700">
-          ← EXIT
-        </div>
-        <div className="absolute left-2 bottom-6 text-xs font-bold text-gray-700">
-          ← EXIT
-        </div>
-
-        {/* Right Side Labels */}
-        <div className="absolute right-2 top-4 text-xs font-bold text-gray-700 transform rotate-90 origin-center">
-          ← ENTRANCE
-        </div>
-        <div className="absolute right-2 top-12 text-xs font-bold text-gray-700 transform rotate-90 origin-center">
-          → EXIT
-        </div>
-
         {/* Box Empty Storage */}
         <div className="absolute right-4 top-8 w-20 sm:w-24 h-12 sm:h-16 bg-orange-200 border border-orange-400 rounded flex items-center justify-center">
           <div className="text-xs font-bold text-orange-800 text-center leading-tight">
@@ -91,14 +75,6 @@ export function FloorPlan({ boxes, onBoxClick }: FloorPlanProps) {
           <div className="text-xs font-bold text-orange-800 text-center leading-tight">
             COUNTING<br />TABLE
           </div>
-        </div>
-
-        {/* Right Side Entrance/Exit */}
-        <div className="absolute right-2 bottom-4 text-xs font-bold text-gray-700 transform rotate-90 origin-center">
-          ← ENTRANCE
-        </div>
-        <div className="absolute right-2 bottom-12 text-xs font-bold text-gray-700 transform rotate-90 origin-center">
-          ↑ ↓ EXIT
         </div>
 
         {/* Box Positions - Row 1 (Top) */}
