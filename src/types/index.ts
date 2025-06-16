@@ -17,6 +17,7 @@ export interface Role {
   status: 'assigned' | 'checked_in' | 'active' | 'completed';
   day?: string;
   time?: 'lunch' | 'after_afternoon';
+  timeLabel?: string;
 }
 
 export interface Shift {
@@ -62,6 +63,7 @@ export interface MoneyCountingSession {
   id: string;
   day: string;
   time: 'lunch' | 'after_afternoon';
+  timeLabel: string;
   assignedVolunteers: string[];
   requiredCount: number;
   minimumBrothers: number;

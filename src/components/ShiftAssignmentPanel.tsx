@@ -18,13 +18,15 @@ interface ShiftAssignmentPanelProps {
   shifts: Shift[];
   onVolunteersUpdate: (volunteers: Volunteer[]) => void;
   onClose: () => void;
+  hasSchedulingConflict: (volunteer: Volunteer, newRole: any) => { hasConflict: boolean; reason: string };
 }
 
 export function ShiftAssignmentPanel({ 
   volunteers, 
   shifts, 
   onVolunteersUpdate, 
-  onClose 
+  onClose,
+  hasSchedulingConflict
 }: ShiftAssignmentPanelProps) {
   const [selectedShift, setSelectedShift] = useState<number | null>(null);
   const [assignmentMode, setAssignmentMode] = useState<'box_watcher' | 'keyman'>('box_watcher');
@@ -53,52 +55,31 @@ export function ShiftAssignmentPanel({
     return { boxWatchers, keymen };
   };
 
-  // Check if volunteer has conflicts for assignment
-  const hasConflictForAssignment = (volunteerId: string, shiftId: number, roleType: 'box_watcher' | 'keyman') => {
-    const volunteer = volunteers.find(v => v.id === volunteerId);
-    if (!volunteer) return true;
-
-    const shift = shifts.find(s => s.id === shiftId);
-    if (!shift) return true;
-
-    // Check privilege requirements
-    if (!volunteer.privileges.includes(roleType)) return true;
-
-    // Check gender restrictions for keymen
-    if (roleType === 'keyman' && volunteer.gender !== 'male') return true;
-
-    // Check for existing assignments in the same shift
-    if (volunteer.roles.some(role => role.shift === shiftId)) return true;
-
-    // Check for time conflicts with money counting
-    const hasMoneyCounterConflict = volunteer.roles.some(role => {
-      if (role.type !== 'money_counter' || role.day !== shift.day) return false;
-      
-      // Lunch time conflicts (shifts 2 and 3)
-      if (role.time === 'lunch') {
-        const conflictingShifts = shift.day === 'Friday' ? [2, 3] :
-                               shift.day === 'Saturday' ? [6, 7] :
-                               [10, 11];
-        return conflictingShifts.includes(shiftId);
-      }
-      
-      // After afternoon conflicts (shift 4)
-      if (role.time === 'after_afternoon') {
-        const conflictingShift = shift.day === 'Friday' ? 4 :
-                                shift.day === 'Saturday' ? 8 :
-                                12;
-        return shiftId === conflictingShift;
-      }
-      
-      return false;
-    });
-
-    return hasMoneyCounterConflict;
-  };
-
   // Get available volunteers for assignment
   const getAvailableVolunteers = (shiftId: number, roleType: 'box_watcher' | 'keyman') => {
-    return volunteers.filter(v => !hasConflictForAssignment(v.id, shiftId, roleType));
+    const shift = shifts.find(s => s.id === shiftId);
+    if (!shift) return [];
+
+    return volunteers.filter(v => {
+      // Must have required privilege
+      if (!v.privileges.includes(roleType)) return false;
+
+      // Check gender restrictions for keymen
+      if (roleType === 'keyman' && v.gender !== 'male') return false;
+
+      // Must not already be assigned to this shift
+      if (v.roles.some(role => role.shift === shiftId)) return false;
+
+      // Check for scheduling conflicts
+      const newRole = {
+        type: roleType,
+        shift: shiftId,
+        day: shift.day
+      };
+
+      const conflictCheck = hasSchedulingConflict(v, newRole);
+      return !conflictCheck.hasConflict;
+    });
   };
 
   // Assign volunteer to box
@@ -115,6 +96,13 @@ export function ShiftAssignmentPanel({
       boxNumber: boxNumber,
       location: boxNumber >= 8 ? 'Entrance/Exit' : 'Box Assignment'
     };
+
+    // Double-check for conflicts
+    const conflictCheck = hasSchedulingConflict(volunteer, newRole);
+    if (conflictCheck.hasConflict) {
+      alert(`Cannot assign: ${conflictCheck.reason}`);
+      return;
+    }
 
     const updatedVolunteers = volunteers.map(v => 
       v.id === volunteerId 
@@ -138,6 +126,13 @@ export function ShiftAssignmentPanel({
       day: shift.day,
       location: 'Accounts Department'
     };
+
+    // Double-check for conflicts
+    const conflictCheck = hasSchedulingConflict(volunteer, newRole);
+    if (conflictCheck.hasConflict) {
+      alert(`Cannot assign: ${conflictCheck.reason}`);
+      return;
+    }
 
     const updatedVolunteers = volunteers.map(v => 
       v.id === volunteerId 
@@ -174,6 +169,17 @@ export function ShiftAssignmentPanel({
     }
   };
 
+  // Helper function to get shift number within day (1-4)
+  const getShiftNumberInDay = (shiftId: number) => {
+    const shift = shifts.find(s => s.id === shiftId);
+    if (!shift) return shiftId;
+    
+    const dayShifts = shifts.filter(s => s.day === shift.day);
+    const sortedDayShifts = dayShifts.sort((a, b) => a.id - b.id);
+    const index = sortedDayShifts.findIndex(s => s.id === shiftId);
+    return index + 1;
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-7xl max-h-[90vh] overflow-hidden">
@@ -186,7 +192,7 @@ export function ShiftAssignmentPanel({
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Shift Assignment Center</h2>
-                <p className="text-teal-100">Assign publishers to shifts and boxes</p>
+                <p className="text-teal-100">Assign publishers to shifts with conflict detection</p>
               </div>
             </div>
             <button
@@ -215,6 +221,7 @@ export function ShiftAssignmentPanel({
                       {shiftsByDay[day]?.map(shift => {
                         const { boxWatchers, keymen } = getShiftAssignments(shift.id);
                         const isComplete = boxWatchers.length === 10 && keymen.length === 3;
+                        const shiftNumInDay = getShiftNumberInDay(shift.id);
                         
                         return (
                           <button
@@ -230,7 +237,7 @@ export function ShiftAssignmentPanel({
                           >
                             <div className="flex items-center justify-between mb-2">
                               <span className="font-medium text-gray-900">
-                                Shift {shift.id}
+                                Shift {shiftNumInDay}
                               </span>
                               {isComplete ? (
                                 <CheckCircle className="w-4 h-4 text-green-600" />
@@ -269,6 +276,8 @@ export function ShiftAssignmentPanel({
                 onRemoveAssignment={handleRemoveAssignment}
                 assignmentMode={assignmentMode}
                 setAssignmentMode={setAssignmentMode}
+                getShiftNumberInDay={getShiftNumberInDay}
+                hasSchedulingConflict={hasSchedulingConflict}
               />
             ) : (
               <div className="flex items-center justify-center h-full">
@@ -276,6 +285,9 @@ export function ShiftAssignmentPanel({
                   <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a Shift</h3>
                   <p className="text-gray-600">Choose a shift from the left panel to start assigning volunteers</p>
+                  <div className="mt-4 text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
+                    <strong>Scheduling Rules:</strong> Max 2 assignments per day. Compatible shifts: 1↔3, 2↔4.
+                  </div>
                 </div>
               </div>
             )}
@@ -297,6 +309,8 @@ interface ShiftAssignmentInterfaceProps {
   onRemoveAssignment: (volunteerId: string, shiftId: number) => void;
   assignmentMode: 'box_watcher' | 'keyman';
   setAssignmentMode: (mode: 'box_watcher' | 'keyman') => void;
+  getShiftNumberInDay: (shiftId: number) => number;
+  hasSchedulingConflict: (volunteer: Volunteer, newRole: any) => { hasConflict: boolean; reason: string };
 }
 
 function ShiftAssignmentInterface({
@@ -308,12 +322,15 @@ function ShiftAssignmentInterface({
   onAssignAsKeyman,
   onRemoveAssignment,
   assignmentMode,
-  setAssignmentMode
+  setAssignmentMode,
+  getShiftNumberInDay,
+  hasSchedulingConflict
 }: ShiftAssignmentInterfaceProps) {
   const [selectedVolunteer, setSelectedVolunteer] = useState<string | null>(null);
   const { boxWatchers, keymen } = getShiftAssignments(shift.id);
   const availableBoxWatchers = getAvailableVolunteers(shift.id, 'box_watcher');
   const availableKeymen = getAvailableVolunteers(shift.id, 'keyman');
+  const shiftNumInDay = getShiftNumberInDay(shift.id);
 
   const getDayColor = (day: string) => {
     switch (day) {
@@ -338,13 +355,24 @@ function ShiftAssignmentInterface({
     setSelectedVolunteer(null);
   };
 
+  // Get conflict information for a volunteer
+  const getVolunteerConflictInfo = (volunteer: Volunteer) => {
+    const newRole = {
+      type: assignmentMode,
+      shift: shift.id,
+      day: shift.day
+    };
+    
+    return hasSchedulingConflict(volunteer, newRole);
+  };
+
   return (
     <div className="p-6">
       {/* Shift Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-2xl font-bold text-gray-900">{shift.name}</h3>
+            <h3 className="text-2xl font-bold text-gray-900">Shift {shiftNumInDay} - {shift.day}</h3>
             <p className="text-gray-600">{shift.startTime} - {shift.endTime}</p>
           </div>
           <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getDayColor(shift.day)}`}>
@@ -516,44 +544,55 @@ function ShiftAssignmentInterface({
           </h4>
           
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {(assignmentMode === 'box_watcher' ? availableBoxWatchers : availableKeymen).map(volunteer => (
-              <button
-                key={volunteer.id}
-                onClick={() => setSelectedVolunteer(selectedVolunteer === volunteer.id ? null : volunteer.id)}
-                className={`w-full text-left p-3 rounded-lg border transition-all ${
-                  selectedVolunteer === volunteer.id
-                    ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200'
-                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold text-xs">
-                        {volunteer.firstName[0]}{volunteer.lastName[0]}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {volunteer.firstName} {volunteer.lastName}
+            {(assignmentMode === 'box_watcher' ? availableBoxWatchers : availableKeymen).map(volunteer => {
+              const conflictInfo = getVolunteerConflictInfo(volunteer);
+              
+              return (
+                <button
+                  key={volunteer.id}
+                  onClick={() => setSelectedVolunteer(selectedVolunteer === volunteer.id ? null : volunteer.id)}
+                  className={`w-full text-left p-3 rounded-lg border transition-all ${
+                    selectedVolunteer === volunteer.id
+                      ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">
+                          {volunteer.firstName[0]}{volunteer.lastName[0]}
+                        </span>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {volunteer.gender === 'male' ? 'Brother' : 'Sister'}
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {volunteer.firstName} {volunteer.lastName}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {volunteer.gender === 'male' ? 'Brother' : 'Sister'}
+                          {/* Show current assignments for this day */}
+                          {volunteer.roles.filter(r => r.day === shift.day).length > 0 && (
+                            <span className="ml-2 text-xs text-blue-600">
+                              ({volunteer.roles.filter(r => r.day === shift.day).length} assigned)
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    
+                    {selectedVolunteer === volunteer.id && (
+                      <CheckCircle className="w-5 h-5 text-teal-600" />
+                    )}
                   </div>
-                  
-                  {selectedVolunteer === volunteer.id && (
-                    <CheckCircle className="w-5 h-5 text-teal-600" />
-                  )}
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
             
             {(assignmentMode === 'box_watcher' ? availableBoxWatchers : availableKeymen).length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                 <p>No available volunteers without conflicts</p>
+                <p className="text-xs mt-1">Check scheduling rules and existing assignments</p>
               </div>
             )}
           </div>

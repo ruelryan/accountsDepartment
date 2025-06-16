@@ -212,6 +212,7 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: En
                         <div key={index} className="flex items-center justify-between text-xs sm:text-sm">
                           <span className="text-gray-600 capitalize font-medium truncate">
                             {role.type.replace('_', ' ')}
+                            {role.timeLabel && ` (${role.timeLabel})`}
                           </span>
                           {role.day && (
                             <span className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ml-2 ${
@@ -628,6 +629,7 @@ function AssignmentOverview({
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900 capitalize">
                   {role.type.replace('_', ' ')}
+                  {role.timeLabel && ` (${role.timeLabel})`}
                 </h3>
                 {role.day && (
                   <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getDayColor(role.day)} self-start sm:self-auto`}>
@@ -734,6 +736,7 @@ function AssignmentOverview({
               <h4 className="font-medium text-gray-900 mb-3 capitalize text-sm sm:text-base">
                 {role.type.replace('_', ' ')} Instructions
                 {role.shift && ` - Shift ${shiftNumInDay}`}
+                {role.timeLabel && ` (${role.timeLabel})`}
               </h4>
               <div className="space-y-1">
                 {instructions.map((instruction, i) => (
@@ -783,13 +786,15 @@ function FullScheduleView({
               
               <div className="space-y-3">
                 {shiftsByDay[day] ? shiftsByDay[day].map((item, index) => {
-                  const shiftNumInDay = getShiftNumberInDay(item.shift.id);
+                  const shiftNumInDay = item.shift ? getShiftNumberInDay(item.shift.id) : null;
                   
                   return (
                     <div key={index} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 space-y-2 sm:space-y-0">
                         <h5 className="font-medium text-gray-900 capitalize text-sm sm:text-base">
-                          {item.role.type.replace('_', ' ')} - Shift {shiftNumInDay}
+                          {item.role.type.replace('_', ' ')}
+                          {item.role.timeLabel && ` (${item.role.timeLabel})`}
+                          {shiftNumInDay && ` - Shift ${shiftNumInDay}`}
                         </h5>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium self-start sm:self-auto ${
                           item.role.status === 'active' ? 'bg-green-100 text-green-800' :
@@ -802,7 +807,7 @@ function FullScheduleView({
                       </div>
                       
                       <div className="text-sm text-gray-600 space-y-1">
-                        <div>{item.shift.startTime} - {item.shift.endTime}</div>
+                        {item.shift && <div>{item.shift.startTime} - {item.shift.endTime}</div>}
                         {item.role.location && <div>📍 {item.role.location}</div>}
                         {item.role.boxNumber && <div>📦 Box #{item.role.boxNumber}</div>}
                       </div>
