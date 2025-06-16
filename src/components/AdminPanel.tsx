@@ -88,6 +88,17 @@ export function AdminPanel({
     }
   ]);
 
+  // Helper function to get shift number within day (1-4)
+  const getShiftNumberInDay = (shiftId: number) => {
+    const shift = shifts.find(s => s.id === shiftId);
+    if (!shift) return shiftId;
+    
+    const dayShifts = shifts.filter(s => s.day === shift.day);
+    const sortedDayShifts = dayShifts.sort((a, b) => a.id - b.id);
+    const index = sortedDayShifts.findIndex(s => s.id === shiftId);
+    return index + 1;
+  };
+
   const checkScheduleConflicts = useCallback(() => {
     const newConflicts: ScheduleConflict[] = [];
 
@@ -125,27 +136,26 @@ export function AdminPanel({
         shiftRoles.forEach(shiftRole => {
           const shift = shifts.find(s => s.id === shiftRole.shift);
           if (shift && shift.day === mcRole.day) {
+            const shiftNumInDay = getShiftNumberInDay(shiftRole.shift!);
+            
             // Check lunch time conflicts (shifts 2 and 3)
-            if (mcRole.time === 'lunch' && (shiftRole.shift === 2 || shiftRole.shift === 3 || 
-                shiftRole.shift === 6 || shiftRole.shift === 7 || 
-                shiftRole.shift === 10 || shiftRole.shift === 11)) {
+            if (mcRole.time === 'lunch' && (shiftNumInDay === 2 || shiftNumInDay === 3)) {
               newConflicts.push({
                 volunteerId: volunteer.id,
                 volunteerName: `${volunteer.firstName} ${volunteer.lastName}`,
                 conflictType: 'time_overlap',
-                message: `Money counter (lunch) conflicts with shift ${shiftRole.shift}`,
+                message: `Money counter (lunch) conflicts with ${shift.day} shift ${shiftNumInDay}`,
                 shifts: [shiftRole.shift!]
               });
             }
             
             // Check after afternoon conflicts (shift 4)
-            if (mcRole.time === 'after_afternoon' && (shiftRole.shift === 4 || 
-                shiftRole.shift === 8 || shiftRole.shift === 12)) {
+            if (mcRole.time === 'after_afternoon' && shiftNumInDay === 4) {
               newConflicts.push({
                 volunteerId: volunteer.id,
                 volunteerName: `${volunteer.firstName} ${volunteer.lastName}`,
                 conflictType: 'time_overlap',
-                message: `Money counter (after afternoon) conflicts with shift ${shiftRole.shift}`,
+                message: `Money counter (after afternoon) conflicts with ${shift.day} shift ${shiftNumInDay}`,
                 shifts: [shiftRole.shift!]
               });
             }
@@ -162,9 +172,10 @@ export function AdminPanel({
       ).length;
 
       if (keymenCount < 3) {
+        const shiftNumInDay = getShiftNumberInDay(shift.id);
         newConflicts.push({
           volunteerId: '',
-          volunteerName: `Shift ${shift.id} - ${shift.name}`,
+          volunteerName: `${shift.day} Shift ${shiftNumInDay}`,
           conflictType: 'insufficient_keymen',
           message: `Only ${keymenCount}/3 keymen assigned`,
           shifts: [shift.id]
@@ -400,6 +411,7 @@ export function AdminPanel({
               volunteers={volunteers}
               shifts={shifts}
               onShowShiftAssignment={() => setShowShiftAssignment(true)}
+              getShiftNumberInDay={getShiftNumberInDay}
             />
           )}
 
@@ -415,7 +427,7 @@ export function AdminPanel({
           )}
 
           {activeTab === 'conflicts' && (
-            <ConflictManagement conflicts={conflicts} volunteers={volunteers} />
+            <ConflictManagement conflicts={conflicts} volunteers={volunteers} getShiftNumberInDay={getShiftNumberInDay} />
           )}
         </div>
       </div>
@@ -437,11 +449,13 @@ export function AdminPanel({
 function ShiftManagement({
   volunteers,
   shifts,
-  onShowShiftAssignment
+  onShowShiftAssignment,
+  getShiftNumberInDay
 }: {
   volunteers: Volunteer[];
   shifts: Shift[];
   onShowShiftAssignment: () => void;
+  getShiftNumberInDay: (shiftId: number) => number;
 }) {
   const getShiftsByDay = () => {
     const shiftsByDay: Record<string, Shift[]> = {};
@@ -515,6 +529,7 @@ function ShiftManagement({
                 {shiftsByDay[day]?.map(shift => {
                   const { boxWatchers, keymen } = getShiftAssignments(shift.id);
                   const isComplete = boxWatchers.length === 10 && keymen.length === 3;
+                  const shiftNumInDay = getShiftNumberInDay(shift.id);
                   
                   return (
                     <div
@@ -526,7 +541,7 @@ function ShiftManagement({
                       }`}
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <h5 className="font-medium text-gray-900">Shift {shift.id}</h5>
+                        <h5 className="font-medium text-gray-900">Shift {shiftNumInDay}</h5>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           isComplete ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                         }`}>
@@ -964,20 +979,24 @@ function MoneyCountingDetailView({
       const hasConflictingShift = v.roles.some(role => {
         if (!role.shift || role.day !== session.day) return false;
         
+        // Get shift number within day (1-4)
+        const shifts = [
+          { id: 1, day: 'Friday', num: 1 }, { id: 2, day: 'Friday', num: 2 }, { id: 3, day: 'Friday', num: 3 }, { id: 4, day: 'Friday', num: 4 },
+          { id: 5, day: 'Saturday', num: 1 }, { id: 6, day: 'Saturday', num: 2 }, { id: 7, day: 'Saturday', num: 3 }, { id: 8, day: 'Saturday', num: 4 },
+          { id: 9, day: 'Sunday', num: 1 }, { id: 10, day: 'Sunday', num: 2 }, { id: 11, day: 'Sunday', num: 3 }, { id: 12, day: 'Sunday', num: 4 }
+        ];
+        
+        const shiftInfo = shifts.find(s => s.id === role.shift);
+        if (!shiftInfo) return false;
+        
         // Lunch time conflicts (shifts 2 and 3)
         if (session.time === 'lunch') {
-          const conflictingShifts = session.day === 'Friday' ? [2, 3] :
-                                   session.day === 'Saturday' ? [6, 7] :
-                                   [10, 11];
-          return conflictingShifts.includes(role.shift);
+          return shiftInfo.num === 2 || shiftInfo.num === 3;
         }
         
         // After afternoon conflicts (shift 4)
         if (session.time === 'after_afternoon') {
-          const conflictingShift = session.day === 'Friday' ? 4 :
-                                  session.day === 'Saturday' ? 8 :
-                                  12;
-          return role.shift === conflictingShift;
+          return shiftInfo.num === 4;
         }
         
         return false;
@@ -1104,13 +1123,15 @@ function MoneyCountingDetailView({
   );
 }
 
-// Conflict Management Component (existing - no changes)
+// Conflict Management Component
 function ConflictManagement({
   conflicts,
-  volunteers
+  volunteers,
+  getShiftNumberInDay
 }: {
   conflicts: ScheduleConflict[];
   volunteers: Volunteer[];
+  getShiftNumberInDay: (shiftId: number) => number;
 }) {
   const getConflictIcon = (type: string) => {
     switch (type) {
@@ -1168,7 +1189,10 @@ function ConflictManagement({
                   {conflict.shifts.length > 0 && (
                     <div className="mt-2">
                       <span className="text-xs text-gray-500">
-                        Affected shifts: {conflict.shifts.join(', ')}
+                        Affected shifts: {conflict.shifts.map(shiftId => {
+                          const shiftNum = getShiftNumberInDay(shiftId);
+                          return `Shift ${shiftNum}`;
+                        }).join(', ')}
                       </span>
                     </div>
                   )}

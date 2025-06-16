@@ -297,6 +297,17 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onAdminLogin }: Volunte
   const [activeTab, setActiveTab] = useState<'overview' | 'schedule' | 'floorplan'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Helper function to get shift number within day (1-4)
+  const getShiftNumberInDay = (shiftId: number) => {
+    const shift = shifts.find(s => s.id === shiftId);
+    if (!shift) return shiftId;
+    
+    const dayShifts = shifts.filter(s => s.day === shift.day);
+    const sortedDayShifts = dayShifts.sort((a, b) => a.id - b.id);
+    const index = sortedDayShifts.findIndex(s => s.id === shiftId);
+    return index + 1;
+  };
+
   const getVolunteerShifts = () => {
     return volunteer.roles.map(role => {
       const shift = shifts.find(s => s.id === role.shift);
@@ -564,11 +575,21 @@ function VolunteerDashboard({ volunteer, shifts, onBack, onAdminLogin }: Volunte
 
         {/* Tab Content */}
         {activeTab === 'overview' && (
-          <AssignmentOverview volunteer={volunteer} shifts={shifts} getDayColor={getDayColor} getInstructions={getInstructions} />
+          <AssignmentOverview 
+            volunteer={volunteer} 
+            shifts={shifts} 
+            getDayColor={getDayColor} 
+            getInstructions={getInstructions}
+            getShiftNumberInDay={getShiftNumberInDay}
+          />
         )}
 
         {activeTab === 'schedule' && (
-          <FullScheduleView shiftsByDay={shiftsByDay} getDayColor={getDayColor} />
+          <FullScheduleView 
+            shiftsByDay={shiftsByDay} 
+            getDayColor={getDayColor}
+            getShiftNumberInDay={getShiftNumberInDay}
+          />
         )}
 
         {activeTab === 'floorplan' && (
@@ -584,12 +605,14 @@ function AssignmentOverview({
   volunteer, 
   shifts, 
   getDayColor, 
-  getInstructions 
+  getInstructions,
+  getShiftNumberInDay
 }: { 
   volunteer: Volunteer; 
   shifts: Shift[]; 
   getDayColor: (day?: string) => string;
   getInstructions: (roleType: string, shiftNumber?: number) => string[];
+  getShiftNumberInDay: (shiftId: number) => number;
 }) {
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -597,7 +620,8 @@ function AssignmentOverview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {volunteer.roles.map((role, index) => {
           const shift = shifts.find(s => s.id === role.shift);
-          const instructions = getInstructions(role.type, role.shift);
+          const shiftNumInDay = role.shift ? getShiftNumberInDay(role.shift) : undefined;
+          const instructions = getInstructions(role.type, shiftNumInDay);
           
           return (
             <div key={index} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-6">
@@ -618,7 +642,9 @@ function AssignmentOverview({
                   {role.shift && shift && (
                     <div className="p-3 bg-blue-50 rounded-lg">
                       <div className="text-sm font-medium text-gray-700">Shift</div>
-                      <div className="font-semibold text-blue-700 text-sm sm:text-base">{shift.name}</div>
+                      <div className="font-semibold text-blue-700 text-sm sm:text-base">
+                        Shift {shiftNumInDay} - {role.day}
+                      </div>
                     </div>
                   )}
                   
@@ -653,7 +679,9 @@ function AssignmentOverview({
                 {shift && (
                   <div className="p-4 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg border border-teal-200">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-teal-900 text-sm sm:text-base">{shift.name}</h4>
+                      <h4 className="font-semibold text-teal-900 text-sm sm:text-base">
+                        Shift {shiftNumInDay} - {shift.day}
+                      </h4>
                       <Clock className="w-4 h-4 text-teal-600" />
                     </div>
                     <div className="space-y-1 text-sm">
@@ -698,12 +726,14 @@ function AssignmentOverview({
         </h3>
         
         {volunteer.roles.map((role, index) => {
-          const instructions = getInstructions(role.type, role.shift);
+          const shiftNumInDay = role.shift ? getShiftNumberInDay(role.shift) : undefined;
+          const instructions = getInstructions(role.type, shiftNumInDay);
           
           return (
             <div key={index} className="mb-6 last:mb-0">
               <h4 className="font-medium text-gray-900 mb-3 capitalize text-sm sm:text-base">
                 {role.type.replace('_', ' ')} Instructions
+                {role.shift && ` - Shift ${shiftNumInDay}`}
               </h4>
               <div className="space-y-1">
                 {instructions.map((instruction, i) => (
@@ -724,10 +754,12 @@ function AssignmentOverview({
 // Full Schedule View Component
 function FullScheduleView({ 
   shiftsByDay, 
-  getDayColor 
+  getDayColor,
+  getShiftNumberInDay
 }: { 
   shiftsByDay: Record<string, Array<{ role: any; shift: Shift }>>; 
   getDayColor: (day?: string) => string;
+  getShiftNumberInDay: (shiftId: number) => number;
 }) {
   const days = ['Friday', 'Saturday', 'Sunday'];
 
@@ -750,29 +782,33 @@ function FullScheduleView({
               </div>
               
               <div className="space-y-3">
-                {shiftsByDay[day] ? shiftsByDay[day].map((item, index) => (
-                  <div key={index} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 space-y-2 sm:space-y-0">
-                      <h5 className="font-medium text-gray-900 capitalize text-sm sm:text-base">
-                        {item.role.type.replace('_', ' ')}
-                      </h5>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium self-start sm:self-auto ${
-                        item.role.status === 'active' ? 'bg-green-100 text-green-800' :
-                        item.role.status === 'checked_in' ? 'bg-blue-100 text-blue-800' :
-                        item.role.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {item.role.status.replace('_', ' ')}
-                      </span>
+                {shiftsByDay[day] ? shiftsByDay[day].map((item, index) => {
+                  const shiftNumInDay = getShiftNumberInDay(item.shift.id);
+                  
+                  return (
+                    <div key={index} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 space-y-2 sm:space-y-0">
+                        <h5 className="font-medium text-gray-900 capitalize text-sm sm:text-base">
+                          {item.role.type.replace('_', ' ')} - Shift {shiftNumInDay}
+                        </h5>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium self-start sm:self-auto ${
+                          item.role.status === 'active' ? 'bg-green-100 text-green-800' :
+                          item.role.status === 'checked_in' ? 'bg-blue-100 text-blue-800' :
+                          item.role.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {item.role.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div>{item.shift.startTime} - {item.shift.endTime}</div>
+                        {item.role.location && <div>📍 {item.role.location}</div>}
+                        {item.role.boxNumber && <div>📦 Box #{item.role.boxNumber}</div>}
+                      </div>
                     </div>
-                    
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <div>{item.shift.startTime} - {item.shift.endTime}</div>
-                      {item.role.location && <div>📍 {item.role.location}</div>}
-                      {item.role.boxNumber && <div>📦 Box #{item.role.boxNumber}</div>}
-                    </div>
-                  </div>
-                )) : (
+                  );
+                }) : (
                   <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
                     No assignments for {day}
                   </div>

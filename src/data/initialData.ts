@@ -1,10 +1,10 @@
 import { Volunteer, Shift, Box } from '../types';
 
 export const shifts: Shift[] = [
-  // Friday
+  // Friday - Shifts 1-4
   {
     id: 1,
-    name: '1st Shift - Friday',
+    name: '1st Shift',
     startTime: '7:40 AM',
     endTime: 'Opening of morning session',
     description: 'Friday morning pre-session setup and initial box deployment',
@@ -16,7 +16,7 @@ export const shifts: Shift[] = [
   },
   {
     id: 2,
-    name: '2nd Shift - Friday', 
+    name: '2nd Shift', 
     startTime: 'Closing song of morning session',
     endTime: 'Halfway through noon intermission',
     description: 'Friday morning session close to intermission midpoint',
@@ -28,7 +28,7 @@ export const shifts: Shift[] = [
   },
   {
     id: 3,
-    name: '3rd Shift - Friday',
+    name: '3rd Shift',
     startTime: 'Halfway through noon intermission', 
     endTime: 'Opening song of afternoon session',
     description: 'Friday intermission midpoint to afternoon start',
@@ -40,7 +40,7 @@ export const shifts: Shift[] = [
   },
   {
     id: 4,
-    name: '4th Shift - Friday',
+    name: '4th Shift',
     startTime: 'Closing song of afternoon session',
     endTime: 'Until attendees have left',
     description: 'Friday final session through departure',
@@ -50,10 +50,10 @@ export const shifts: Shift[] = [
     requiredKeymen: 3,
     assignedVolunteers: []
   },
-  // Saturday
+  // Saturday - Shifts 1-4
   {
     id: 5,
-    name: '1st Shift - Saturday',
+    name: '1st Shift',
     startTime: '7:40 AM',
     endTime: 'Opening of morning session',
     description: 'Saturday morning pre-session setup and initial box deployment',
@@ -65,7 +65,7 @@ export const shifts: Shift[] = [
   },
   {
     id: 6,
-    name: '2nd Shift - Saturday', 
+    name: '2nd Shift', 
     startTime: 'Closing song of morning session',
     endTime: 'Halfway through noon intermission',
     description: 'Saturday morning session close to intermission midpoint',
@@ -77,7 +77,7 @@ export const shifts: Shift[] = [
   },
   {
     id: 7,
-    name: '3rd Shift - Saturday',
+    name: '3rd Shift',
     startTime: 'Halfway through noon intermission', 
     endTime: 'Opening song of afternoon session',
     description: 'Saturday intermission midpoint to afternoon start',
@@ -89,7 +89,7 @@ export const shifts: Shift[] = [
   },
   {
     id: 8,
-    name: '4th Shift - Saturday',
+    name: '4th Shift',
     startTime: 'Closing song of afternoon session',
     endTime: 'Until attendees have left',
     description: 'Saturday final session through departure',
@@ -99,10 +99,10 @@ export const shifts: Shift[] = [
     requiredKeymen: 3,
     assignedVolunteers: []
   },
-  // Sunday
+  // Sunday - Shifts 1-4
   {
     id: 9,
-    name: '1st Shift - Sunday',
+    name: '1st Shift',
     startTime: '7:40 AM',
     endTime: 'Opening of morning session',
     description: 'Sunday morning pre-session setup and initial box deployment',
@@ -114,7 +114,7 @@ export const shifts: Shift[] = [
   },
   {
     id: 10,
-    name: '2nd Shift - Sunday', 
+    name: '2nd Shift', 
     startTime: 'Closing song of morning session',
     endTime: 'Halfway through noon intermission',
     description: 'Sunday morning session close to intermission midpoint',
@@ -126,7 +126,7 @@ export const shifts: Shift[] = [
   },
   {
     id: 11,
-    name: '3rd Shift - Sunday',
+    name: '3rd Shift',
     startTime: 'Halfway through noon intermission', 
     endTime: 'Opening song of afternoon session',
     description: 'Sunday intermission midpoint to afternoon start',
@@ -138,7 +138,7 @@ export const shifts: Shift[] = [
   },
   {
     id: 12,
-    name: '4th Shift - Sunday',
+    name: '4th Shift',
     startTime: 'Closing song of afternoon session',
     endTime: 'Until attendees have left',
     description: 'Sunday final session through departure',
@@ -278,7 +278,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Abena', 
     lastName: 'Gladish', 
     gender: 'female',
-    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday' }], 
+    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday', time: 'after_afternoon' }], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
@@ -287,7 +287,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Abarri', 
     lastName: 'Jeralyn', 
     gender: 'female',
-    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday' }], 
+    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday', time: 'after_afternoon' }], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
@@ -296,7 +296,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Dasal', 
     lastName: 'Roger', 
     gender: 'male',
-    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday' }], 
+    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday', time: 'after_afternoon' }], 
     isAvailable: true,
     privileges: ['keyman', 'money_counter']
   },
@@ -305,7 +305,7 @@ export const volunteers: Volunteer[] = [
     firstName: 'Madura', 
     lastName: 'Cyrus', 
     gender: 'male',
-    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday' }], 
+    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday', time: 'after_afternoon' }], 
     isAvailable: true,
     privileges: ['keyman', 'money_counter']
   }
