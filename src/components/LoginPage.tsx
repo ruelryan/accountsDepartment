@@ -114,12 +114,6 @@ export function LoginPage({ onLogin, onCancel }: LoginPageProps) {
               )}
             </button>
           </form>
-
-          <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-white/10">
-            <p className="text-xs text-white/50 text-center">
-              For demonstration: username: <span className="text-white/70 font-mono">admin</span>, password: <span className="text-white/70 font-mono">accounts2024</span>
-            </p>
-          </div>
         </div>
       </div>
     </div>

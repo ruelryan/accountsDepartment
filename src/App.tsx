@@ -44,7 +44,7 @@ function App() {
 
   const handleLogin = (username: string, password: string) => {
     // Simple authentication - in production, this would be more secure
-    if (username === 'admin' && password === 'accounts2024') {
+    if (username === 'admin' && password === 'accounts2025') {
       setIsAdminLoggedIn(true);
       setShowLogin(false);
       return true;

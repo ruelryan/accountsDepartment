@@ -151,163 +151,314 @@ export const shifts: Shift[] = [
 ];
 
 export const volunteers: Volunteer[] = [
-  // Friday Afternoon Box Watchers - Shift 3
+  // Sisters - Box Watcher and Money Counter privileges
   { 
     id: '1', 
-    firstName: 'Bersano', 
-    lastName: 'Keziah', 
+    firstName: 'Ainne', 
+    lastName: 'Malaki', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 1, location: 'Main Hall', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
   { 
     id: '2', 
-    firstName: 'Malaki', 
-    lastName: 'Coney Rea', 
+    firstName: 'Aldrenaline', 
+    lastName: 'Gay', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 2, location: 'Main Hall', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
   { 
     id: '3', 
-    firstName: 'Razon', 
-    lastName: 'Gina', 
+    firstName: 'Analyn', 
+    lastName: 'Clemente', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 3, location: 'Main Hall', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
   { 
     id: '4', 
-    firstName: 'Salinas', 
-    lastName: 'Vanessa', 
+    firstName: 'Dahlia', 
+    lastName: 'Villaruel', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 4, location: 'Main Hall', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
   { 
     id: '5', 
-    firstName: 'Agulto', 
-    lastName: 'Aliah', 
+    firstName: 'Ella', 
+    lastName: 'De Paz', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 5, location: 'Main Hall', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
   { 
     id: '6', 
-    firstName: 'Pariñas', 
-    lastName: 'Nicole', 
+    firstName: 'Hazel Anne', 
+    lastName: 'Sacro', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 6, location: 'Main Hall', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
   { 
     id: '7', 
-    firstName: 'Clemente', 
-    lastName: 'Analyn', 
+    firstName: 'Jeanly', 
+    lastName: 'Roales', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 7, location: 'Main Hall', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
   { 
     id: '8', 
-    firstName: 'Ombina', 
-    lastName: 'Jealyn', 
+    firstName: 'Jaye Kayla', 
+    lastName: 'Rosal', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 8, location: 'Entrance/Exit', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
   { 
     id: '9', 
-    firstName: 'Agulto', 
-    lastName: 'Toby Bryan', 
-    gender: 'male',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 9, location: 'Entrance/Exit', day: 'Friday' }], 
+    firstName: 'Keziah', 
+    lastName: 'Bersano', 
+    gender: 'female',
+    roles: [], 
     isAvailable: true,
-    privileges: ['box_watcher', 'keyman', 'money_counter']
+    privileges: ['box_watcher', 'money_counter']
   },
   { 
     id: '10', 
-    firstName: 'Talavera', 
-    lastName: 'Roche Lou', 
+    firstName: 'Kristel Joy', 
+    lastName: 'Pagalan', 
     gender: 'female',
-    roles: [{ type: 'box_watcher', shift: 3, status: 'assigned', boxNumber: 10, location: 'Entrance/Exit', day: 'Friday' }], 
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '11', 
+    firstName: 'Kyla Marie', 
+    lastName: 'Pagaran', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '12', 
+    firstName: 'Lady Jane', 
+    lastName: 'Gay', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '13', 
+    firstName: 'Lefril Ann', 
+    lastName: 'Gay', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '14', 
+    firstName: 'Lymarie', 
+    lastName: 'Sermillas', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '15', 
+    firstName: 'Nicole', 
+    lastName: 'Altura', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '16', 
+    firstName: 'Quenette', 
+    lastName: 'De Paz', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '17', 
+    firstName: 'Raisa', 
+    lastName: 'Pimentel', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '18', 
+    firstName: 'Relyn', 
+    lastName: 'Carino', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '19', 
+    firstName: 'Reshel', 
+    lastName: 'Judico', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '20', 
+    firstName: 'Rovelyn', 
+    lastName: 'Pagaran', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '21', 
+    firstName: 'Rozyville', 
+    lastName: 'Miro', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '22', 
+    firstName: 'Vanessa', 
+    lastName: 'Salinas', 
+    gender: 'female',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter']
+  },
+  { 
+    id: '23', 
+    firstName: 'Eulane', 
+    lastName: 'Mendoza', 
+    gender: 'female',
+    roles: [], 
     isAvailable: true,
     privileges: ['box_watcher', 'money_counter']
   },
 
-  // Keymen - Friday
+  // Brothers - Box Watcher, Money Counter, and Keyman privileges
   { 
-    id: '51', 
-    firstName: 'Acampado', 
-    lastName: 'Louiel Jay', 
+    id: '24', 
+    firstName: 'Armel', 
+    lastName: 'Roales', 
     gender: 'male',
-    roles: [{ type: 'keyman', shift: 3, status: 'assigned', location: 'Accounts Department', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
-    privileges: ['keyman', 'money_counter']
+    privileges: ['box_watcher', 'money_counter', 'keyman']
   },
   { 
-    id: '52', 
-    firstName: 'Basadre', 
-    lastName: 'Christian', 
+    id: '25', 
+    firstName: 'Romeo', 
+    lastName: 'Dasal Jr', 
     gender: 'male',
-    roles: [{ type: 'keyman', shift: 3, status: 'assigned', location: 'Accounts Department', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
-    privileges: ['keyman', 'money_counter']
+    privileges: ['box_watcher', 'money_counter', 'keyman']
   },
   { 
-    id: '53', 
-    firstName: 'Clemente', 
-    lastName: 'Mark Anthony', 
+    id: '26', 
+    firstName: 'Eden Seb', 
+    lastName: 'Engalan', 
     gender: 'male',
-    roles: [{ type: 'keyman', shift: 3, status: 'assigned', location: 'Accounts Department', day: 'Friday' }], 
+    roles: [], 
     isAvailable: true,
-    privileges: ['keyman', 'money_counter']
-  },
-
-  // Money Counters - Friday After Shift 4
-  { 
-    id: '69', 
-    firstName: 'Abena', 
-    lastName: 'Gladish', 
-    gender: 'female',
-    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday', time: 'after_afternoon' }], 
-    isAvailable: true,
-    privileges: ['box_watcher', 'money_counter']
+    privileges: ['box_watcher', 'money_counter', 'keyman']
   },
   { 
-    id: '70', 
-    firstName: 'Abarri', 
-    lastName: 'Jeralyn', 
-    gender: 'female',
-    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday', time: 'after_afternoon' }], 
-    isAvailable: true,
-    privileges: ['box_watcher', 'money_counter']
-  },
-  { 
-    id: '71', 
-    firstName: 'Dasal', 
-    lastName: 'Roger', 
+    id: '27', 
+    firstName: 'Jeddan', 
+    lastName: 'Jusay', 
     gender: 'male',
-    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday', time: 'after_afternoon' }], 
+    roles: [], 
     isAvailable: true,
-    privileges: ['keyman', 'money_counter']
+    privileges: ['box_watcher', 'money_counter', 'keyman']
   },
   { 
-    id: '72', 
-    firstName: 'Madura', 
-    lastName: 'Cyrus', 
+    id: '28', 
+    firstName: 'Jundino', 
+    lastName: 'Razon', 
     gender: 'male',
-    roles: [{ type: 'money_counter', status: 'assigned', location: 'Counting Table', day: 'Friday', time: 'after_afternoon' }], 
+    roles: [], 
     isAvailable: true,
-    privileges: ['keyman', 'money_counter']
+    privileges: ['box_watcher', 'money_counter', 'keyman']
+  },
+  { 
+    id: '29', 
+    firstName: 'Kim', 
+    lastName: 'Millan', 
+    gender: 'male',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter', 'keyman']
+  },
+  { 
+    id: '30', 
+    firstName: 'Louiel Jay', 
+    lastName: 'Acampado', 
+    gender: 'male',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter', 'keyman']
+  },
+  { 
+    id: '31', 
+    firstName: 'Mark Anthony', 
+    lastName: 'Clemente', 
+    gender: 'male',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter', 'keyman']
+  },
+  { 
+    id: '32', 
+    firstName: 'Roche Lou', 
+    lastName: 'Talavera', 
+    gender: 'male',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter', 'keyman']
+  },
+  { 
+    id: '33', 
+    firstName: 'Roger', 
+    lastName: 'Dasal', 
+    gender: 'male',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter', 'keyman']
+  },
+  { 
+    id: '34', 
+    firstName: 'Ruel Ryan', 
+    lastName: 'Rosal', 
+    gender: 'male',
+    roles: [], 
+    isAvailable: true,
+    privileges: ['box_watcher', 'money_counter', 'keyman']
   }
 ];
 
