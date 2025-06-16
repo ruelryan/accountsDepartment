@@ -14,7 +14,11 @@ import {
   MapPin,
   DollarSign,
   CheckCircle,
-  Package
+  Package,
+  Database,
+  CloudOff,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { ShiftAssignmentPanel } from './ShiftAssignmentPanel';
 
@@ -24,6 +28,8 @@ interface AdminPanelProps {
   onVolunteersUpdate: (volunteers: Volunteer[]) => void;
   onShiftsUpdate: (shifts: Shift[]) => void;
   onBackToMain: () => void;
+  isOnline: boolean;
+  lastSynced: Date | null;
 }
 
 export function AdminPanel({ 
@@ -31,7 +37,9 @@ export function AdminPanel({
   shifts, 
   onVolunteersUpdate, 
   onShiftsUpdate, 
-  onBackToMain 
+  onBackToMain,
+  isOnline,
+  lastSynced
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'volunteers' | 'scheduling' | 'conflicts' | 'shifts'>('volunteers');
   const [editingVolunteer, setEditingVolunteer] = useState<Volunteer | null>(null);
@@ -329,14 +337,55 @@ export function AdminPanel({
                   <p className="text-gray-600">Manage volunteers, schedules, and assignments</p>
                 </div>
               </div>
-              <button
-                onClick={onBackToMain}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium"
-              >
-                Back to Dashboard
-              </button>
+              <div className="flex items-center space-x-4">
+                {/* Connection Status */}
+                <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium ${
+                  isOnline 
+                    ? 'bg-green-100 text-green-800 border border-green-200' 
+                    : 'bg-orange-100 text-orange-800 border border-orange-200'
+                }`}>
+                  {isOnline ? (
+                    <>
+                      <Database className="w-4 h-4" />
+                      <span>Connected</span>
+                    </>
+                  ) : (
+                    <>
+                      <WifiOff className="w-4 h-4" />
+                      <span>Offline</span>
+                    </>
+                  )}
+                  {lastSynced && isOnline && (
+                    <span className="text-xs opacity-75">
+                      • {lastSynced.toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+                
+                <button
+                  onClick={onBackToMain}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium"
+                >
+                  Back to Dashboard
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Offline Warning */}
+          {!isOnline && (
+            <div className="bg-orange-100 border border-orange-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center space-x-3">
+                <CloudOff className="w-5 h-5 text-orange-600" />
+                <div>
+                  <h3 className="font-medium text-orange-900">Working Offline</h3>
+                  <p className="text-sm text-orange-700">
+                    Changes are being saved locally and will sync automatically when connection is restored.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Navigation Tabs */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
