@@ -115,103 +115,101 @@ export function AdminPanel({
 
   // Enhanced scheduling conflict detection
   const hasSchedulingConflict = useCallback((volunteer: Volunteer, newRole: any) => {
-    // Check if volunteer exists (not deleted)
-    const currentVolunteer = volunteers.find(v => v.id === volunteer.id);
-    if (!currentVolunteer) {
-      return { hasConflict: true, reason: 'Volunteer no longer exists in the system' };
+    // Check if volunteer exists
+    if (!volunteers.find(v => v.id === volunteer.id)) {
+      return { hasConflict: true, reason: 'Volunteer not found' };
     }
 
     // Check privilege requirements
-    if (!currentVolunteer.privileges.includes(newRole.type)) {
-      return { hasConflict: true, reason: `Volunteer doesn't have ${newRole.type.replace('_', ' ')} privilege` };
+    if (!volunteer.privileges.includes(newRole.type)) {
+      return { hasConflict: true, reason: `Missing ${newRole.type.replace('_', ' ')} privilege` };
     }
 
     // Check gender restrictions for keymen
-    if (newRole.type === 'keyman' && currentVolunteer.gender !== 'male') {
+    if (newRole.type === 'keyman' && volunteer.gender !== 'male') {
       return { hasConflict: true, reason: 'Keyman role requires male volunteer' };
     }
 
-    // Check for existing assignment in the same shift
-    if (newRole.shift && currentVolunteer.roles.some(role => role.shift === newRole.shift)) {
-      return { hasConflict: true, reason: 'Already assigned to this shift' };
-    }
-
-    // Count assignments for the day
-    const dayAssignments = currentVolunteer.roles.filter(role => role.day === newRole.day);
+    // Get current assignments for the same day
+    const dayAssignments = volunteer.roles.filter(role => role.day === newRole.day);
+    
+    // Check maximum assignments per day (2)
     if (dayAssignments.length >= 2) {
       return { hasConflict: true, reason: 'Maximum 2 assignments per day reached' };
     }
 
-    // Check shift compatibility rules
-    if (newRole.shift && newRole.type !== 'money_counter') {
-      const shift = shifts.find(s => s.id === newRole.shift);
-      if (!shift) return { hasConflict: false, reason: '' };
+    // Check for existing assignment to the same shift
+    if (newRole.shift && volunteer.roles.some(role => role.shift === newRole.shift)) {
+      return { hasConflict: true, reason: 'Already assigned to this shift' };
+    }
 
+    // For shift assignments, check compatibility rules
+    if (newRole.shift) {
       const shiftNumInDay = getShiftNumberInDay(newRole.shift);
       
-      // Check for conflicting shifts on the same day
-      const conflictingShifts = currentVolunteer.roles.filter(role => 
-        role.day === newRole.day && role.shift && role.type !== 'money_counter'
-      );
-
-      for (const existingRole of conflictingShifts) {
-        const existingShiftNum = getShiftNumberInDay(existingRole.shift!);
+      for (const existingRole of dayAssignments) {
+        if (existingRole.shift) {
+          const existingShiftNum = getShiftNumberInDay(existingRole.shift);
+          
+          // Check incompatible shift combinations
+          const incompatiblePairs = [
+            [1, 2], [2, 1], // Shift 1 and 2 are incompatible
+            [3, 4], [4, 3]  // Shift 3 and 4 are incompatible
+          ];
+          
+          for (const [a, b] of incompatiblePairs) {
+            if ((shiftNumInDay === a && existingShiftNum === b) || 
+                (shiftNumInDay === b && existingShiftNum === a)) {
+              return { 
+                hasConflict: true, 
+                reason: `Shift ${shiftNumInDay} conflicts with existing Shift ${existingShiftNum}` 
+              };
+            }
+          }
+        }
         
-        // Incompatible shift combinations
-        if (
-          (shiftNumInDay === 1 && existingShiftNum === 2) ||
-          (shiftNumInDay === 2 && existingShiftNum === 1) ||
-          (shiftNumInDay === 3 && existingShiftNum === 4) ||
-          (shiftNumInDay === 4 && existingShiftNum === 3)
-        ) {
-          return { 
-            hasConflict: true, 
-            reason: `Shift ${shiftNumInDay} conflicts with existing Shift ${existingShiftNum} assignment` 
-          };
-        }
-      }
-
-      // Check money counter conflicts
-      const moneyCounterRoles = currentVolunteer.roles.filter(role => 
-        role.type === 'money_counter' && role.day === newRole.day
-      );
-
-      for (const mcRole of moneyCounterRoles) {
-        if (mcRole.time === 'lunch' && (shiftNumInDay === 2 || shiftNumInDay === 3)) {
-          return { 
-            hasConflict: true, 
-            reason: `Shift ${shiftNumInDay} conflicts with lunch money counting` 
-          };
-        }
-        if (mcRole.time === 'after_afternoon' && shiftNumInDay === 4) {
-          return { 
-            hasConflict: true, 
-            reason: `Shift ${shiftNumInDay} conflicts with after afternoon money counting` 
-          };
+        // Check money counter conflicts
+        if (existingRole.type === 'money_counter') {
+          // Lunch time conflicts with shifts 2 and 3
+          if (existingRole.time === 'lunch' && (shiftNumInDay === 2 || shiftNumInDay === 3)) {
+            return { 
+              hasConflict: true, 
+              reason: `Shift ${shiftNumInDay} conflicts with lunch money counting` 
+            };
+          }
+          
+          // After afternoon conflicts with shift 4
+          if (existingRole.time === 'after_afternoon' && shiftNumInDay === 4) {
+            return { 
+              hasConflict: true, 
+              reason: `Shift ${shiftNumInDay} conflicts with after afternoon money counting` 
+            };
+          }
         }
       }
     }
 
-    // Check money counter conflicts with shifts
+    // For money counter assignments, check shift conflicts
     if (newRole.type === 'money_counter') {
-      const shiftRoles = currentVolunteer.roles.filter(role => 
-        role.shift && role.day === newRole.day
-      );
-
-      for (const shiftRole of shiftRoles) {
-        const shiftNumInDay = getShiftNumberInDay(shiftRole.shift!);
-        
-        if (newRole.time === 'lunch' && (shiftNumInDay === 2 || shiftNumInDay === 3)) {
-          return { 
-            hasConflict: true, 
-            reason: `Lunch money counting conflicts with Shift ${shiftNumInDay}` 
-          };
-        }
-        if (newRole.time === 'after_afternoon' && shiftNumInDay === 4) {
-          return { 
-            hasConflict: true, 
-            reason: `After afternoon money counting conflicts with Shift ${shiftNumInDay}` 
-          };
+      for (const existingRole of dayAssignments) {
+        if (existingRole.shift) {
+          const existingShiftNum = getShiftNumberInDay(existingRole.shift);
+          
+          // Lunch time conflicts with shifts 2 and 3
+          if (newRole.time === 'lunch' && (existingShiftNum === 2 || existingShiftNum === 3)) {
+            return { 
+              hasConflict: true, 
+              reason: `Lunch money counting conflicts with existing Shift ${existingShiftNum}` 
+            };
+          }
+          
+          // After afternoon conflicts with shift 4
+          if (newRole.time === 'after_afternoon' && existingShiftNum === 4) {
+            return { 
+              hasConflict: true, 
+              reason: `After afternoon money counting conflicts with existing Shift ${existingShiftNum}` 
+            };
+          }
         }
       }
     }
@@ -305,13 +303,8 @@ export function AdminPanel({
 
     // Check money counting session requirements
     moneyCountingSessions.forEach(session => {
-      // Filter out deleted volunteers from assigned list
-      const validAssignedVolunteers = session.assignedVolunteers.filter(vId => 
-        volunteers.some(v => v.id === vId)
-      );
-      
-      const assignedCount = validAssignedVolunteers.length;
-      const brothersCount = validAssignedVolunteers.filter(vId => {
+      const assignedCount = session.assignedVolunteers.length;
+      const brothersCount = session.assignedVolunteers.filter(vId => {
         const volunteer = volunteers.find(v => v.id === vId);
         return volunteer?.gender === 'male';
       }).length;
@@ -365,19 +358,24 @@ export function AdminPanel({
     }
   };
 
-  const handleDeleteVolunteer = (volunteerId: string) => {
-    if (confirm('Are you sure you want to delete this volunteer? This will remove all their assignments.')) {
-      // Remove volunteer from volunteers list
-      const updatedVolunteers = volunteers.filter(v => v.id !== volunteerId);
-      
-      // Remove volunteer from money counting sessions
+  const handleDeleteVolunteer = async (volunteerId: string) => {
+    const volunteer = volunteers.find(v => v.id === volunteerId);
+    if (!volunteer) return;
+
+    if (confirm(`Are you sure you want to delete ${volunteer.firstName} ${volunteer.lastName}? This will remove all their assignments.`)) {
+      // Remove volunteer from all money counting sessions
       const updatedSessions = moneyCountingSessions.map(session => ({
         ...session,
         assignedVolunteers: session.assignedVolunteers.filter(id => id !== volunteerId)
       }));
-      
-      onVolunteersUpdate(updatedVolunteers);
       setMoneyCountingSessions(updatedSessions);
+
+      // Remove volunteer from volunteers list
+      const updatedVolunteers = volunteers.filter(v => v.id !== volunteerId);
+      
+      // Update the volunteers in the database
+      await onVolunteersUpdate(updatedVolunteers);
+      
       checkScheduleConflicts();
     }
   };
@@ -387,14 +385,16 @@ export function AdminPanel({
     const volunteer = volunteers.find(v => v.id === volunteerId);
     if (!session || !volunteer) return;
 
-    // Check for conflicts
     const newRole = {
       type: 'money_counter' as const,
+      status: 'assigned' as const,
       day: session.day,
+      location: 'Counting Table',
       time: session.time,
       timeLabel: session.timeLabel
     };
 
+    // Check for conflicts
     const conflictCheck = hasSchedulingConflict(volunteer, newRole);
     if (conflictCheck.hasConflict) {
       alert(`Cannot assign: ${conflictCheck.reason}`);
@@ -404,18 +404,9 @@ export function AdminPanel({
     // Update volunteer roles
     const updatedVolunteers = volunteers.map(v => {
       if (v.id === volunteerId) {
-        const roleToAdd = {
-          type: 'money_counter' as const,
-          status: 'assigned' as const,
-          day: session.day,
-          location: 'Counting Table',
-          time: session.time,
-          timeLabel: session.timeLabel
-        };
-
         return {
           ...v,
-          roles: [...v.roles, roleToAdd]
+          roles: [...v.roles, newRole]
         };
       }
       return v;
@@ -806,7 +797,7 @@ function ShiftManagement({
   );
 }
 
-// Volunteer Management Component (existing - no changes)
+// Volunteer Management Component
 function VolunteerManagement({
   volunteers,
   editingVolunteer,
@@ -1030,7 +1021,7 @@ function VolunteerManagement({
   );
 }
 
-// Scheduling Management Component (existing - no changes)
+// Scheduling Management Component
 function SchedulingManagement({
   volunteers,
   shifts,
@@ -1086,12 +1077,8 @@ function SchedulingManagement({
 
               <div className="space-y-3">
                 {sessionsByDay[day]?.map(session => {
-                  // Filter out deleted volunteers
-                  const validAssignedVolunteers = session.assignedVolunteers.filter(vId => 
-                    volunteers.some(v => v.id === vId)
-                  );
-                  const assignedCount = validAssignedVolunteers.length;
-                  const brothersCount = validAssignedVolunteers.filter(vId => {
+                  const assignedCount = session.assignedVolunteers.length;
+                  const brothersCount = session.assignedVolunteers.filter(vId => {
                     const volunteer = volunteers.find(v => v.id === vId);
                     return volunteer?.gender === 'male';
                   }).length;
@@ -1150,7 +1137,7 @@ function SchedulingManagement({
   );
 }
 
-// Money Counting Detail View Component (existing - no changes)
+// Money Counting Detail View Component
 function MoneyCountingDetailView({
   session,
   volunteers,
@@ -1162,13 +1149,8 @@ function MoneyCountingDetailView({
   onAssignToMoneyCounter: (volunteerId: string, sessionId: string) => void;
   onRemoveFromMoneyCounter: (volunteerId: string, sessionId: string) => void;
 }) {
-  // Filter out deleted volunteers from assigned list
-  const validAssignedVolunteers = session.assignedVolunteers.filter(vId => 
-    volunteers.some(v => v.id === vId)
-  );
-  
   const assignedVolunteers = volunteers.filter(v => 
-    validAssignedVolunteers.includes(v.id)
+    session.assignedVolunteers.includes(v.id)
   );
 
   const getAvailableVolunteers = () => {
@@ -1177,7 +1159,7 @@ function MoneyCountingDetailView({
       if (!v.privileges.includes('money_counter')) return false;
       
       // Must not already be assigned to this session
-      if (validAssignedVolunteers.includes(v.id)) return false;
+      if (session.assignedVolunteers.includes(v.id)) return false;
       
       // Check for shift conflicts
       const hasConflictingShift = v.roles.some(role => {
