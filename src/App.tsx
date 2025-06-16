@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { LoginPage } from './components/LoginPage';
 import { AdminDashboard } from './components/AdminDashboard';
 import { EnhancedVolunteerPortal } from './components/EnhancedVolunteerPortal';
@@ -11,6 +11,21 @@ function App() {
   const [shiftsData, setShiftsData] = useState<Shift[]>(shifts);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+
+  // Load saved data on app start
+  useEffect(() => {
+    const savedData = localStorage.getItem('conventionAccountsData');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        if (parsedData.volunteers) setVolunteers(parsedData.volunteers);
+        if (parsedData.boxes) setBoxes(parsedData.boxes);
+        if (parsedData.shifts) setShiftsData(parsedData.shifts);
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
+    }
+  }, []);
 
   const handleStatusChange = useCallback((volunteerId: string, newStatus: string) => {
     setVolunteers(prev => prev.map(volunteer => 
