@@ -50,7 +50,7 @@ export function AdminPanel({
       id: 'friday-lunch',
       day: 'Friday',
       time: 'lunch',
-      timeLabel: 'Noon Intermission',
+      timeLabel: 'Lunch Time',
       assignedVolunteers: [],
       requiredCount: 8,
       minimumBrothers: 2
@@ -59,7 +59,7 @@ export function AdminPanel({
       id: 'friday-afternoon',
       day: 'Friday',
       time: 'after_afternoon',
-      timeLabel: 'After Afternoon Session',
+      timeLabel: 'After Afternoon',
       assignedVolunteers: [],
       requiredCount: 8,
       minimumBrothers: 2
@@ -68,7 +68,7 @@ export function AdminPanel({
       id: 'saturday-lunch',
       day: 'Saturday',
       time: 'lunch',
-      timeLabel: 'Noon Intermission',
+      timeLabel: 'Lunch Time',
       assignedVolunteers: [],
       requiredCount: 8,
       minimumBrothers: 2
@@ -77,7 +77,7 @@ export function AdminPanel({
       id: 'saturday-afternoon',
       day: 'Saturday',
       time: 'after_afternoon',
-      timeLabel: 'After Afternoon Session',
+      timeLabel: 'After Afternoon',
       assignedVolunteers: [],
       requiredCount: 8,
       minimumBrothers: 2
@@ -86,7 +86,7 @@ export function AdminPanel({
       id: 'sunday-lunch',
       day: 'Sunday',
       time: 'lunch',
-      timeLabel: 'Noon Intermission',
+      timeLabel: 'Lunch Time',
       assignedVolunteers: [],
       requiredCount: 8,
       minimumBrothers: 2
@@ -95,7 +95,7 @@ export function AdminPanel({
       id: 'sunday-afternoon',
       day: 'Sunday',
       time: 'after_afternoon',
-      timeLabel: 'After Afternoon Session',
+      timeLabel: 'After Afternoon',
       assignedVolunteers: [],
       requiredCount: 8,
       minimumBrothers: 2
@@ -113,149 +113,129 @@ export function AdminPanel({
     return index + 1;
   };
 
-  // Check if volunteer has conflicts based on new rules
-  const hasSchedulingConflict = (volunteer: Volunteer, newRole: any) => {
-    const volunteerRoles = volunteer.roles.filter(role => role.day === newRole.day);
-    
-    // Check maximum assignments per day (2 max)
-    if (volunteerRoles.length >= 2) {
-      return { hasConflict: true, reason: 'Maximum 2 assignments per day exceeded' };
+  // Enhanced scheduling conflict detection
+  const hasSchedulingConflict = useCallback((volunteer: Volunteer, newRole: any) => {
+    // Check if volunteer exists (not deleted)
+    const currentVolunteer = volunteers.find(v => v.id === volunteer.id);
+    if (!currentVolunteer) {
+      return { hasConflict: true, reason: 'Volunteer no longer exists in the system' };
     }
 
-    // If adding a shift role
-    if (newRole.shift) {
-      const newShiftNum = getShiftNumberInDay(newRole.shift);
+    // Check privilege requirements
+    if (!currentVolunteer.privileges.includes(newRole.type)) {
+      return { hasConflict: true, reason: `Volunteer doesn't have ${newRole.type.replace('_', ' ')} privilege` };
+    }
+
+    // Check gender restrictions for keymen
+    if (newRole.type === 'keyman' && currentVolunteer.gender !== 'male') {
+      return { hasConflict: true, reason: 'Keyman role requires male volunteer' };
+    }
+
+    // Check for existing assignment in the same shift
+    if (newRole.shift && currentVolunteer.roles.some(role => role.shift === newRole.shift)) {
+      return { hasConflict: true, reason: 'Already assigned to this shift' };
+    }
+
+    // Count assignments for the day
+    const dayAssignments = currentVolunteer.roles.filter(role => role.day === newRole.day);
+    if (dayAssignments.length >= 2) {
+      return { hasConflict: true, reason: 'Maximum 2 assignments per day reached' };
+    }
+
+    // Check shift compatibility rules
+    if (newRole.shift && newRole.type !== 'money_counter') {
+      const shift = shifts.find(s => s.id === newRole.shift);
+      if (!shift) return { hasConflict: false, reason: '' };
+
+      const shiftNumInDay = getShiftNumberInDay(newRole.shift);
       
-      for (const existingRole of volunteerRoles) {
-        // Check shift conflicts
-        if (existingRole.shift) {
-          const existingShiftNum = getShiftNumberInDay(existingRole.shift);
-          
-          // Conflicting shift combinations
-          const conflictingPairs = [
-            [1, 2], [2, 1], // Shift 1 conflicts with Shift 2
-            [2, 3], [3, 2], // Shift 2 conflicts with Shift 3
-            [3, 4], [4, 3]  // Shift 3 conflicts with Shift 4
-          ];
-          
-          if (conflictingPairs.some(([a, b]) => a === existingShiftNum && b === newShiftNum)) {
-            return { hasConflict: true, reason: `Shift ${existingShiftNum} conflicts with Shift ${newShiftNum}` };
-          }
-        }
+      // Check for conflicting shifts on the same day
+      const conflictingShifts = currentVolunteer.roles.filter(role => 
+        role.day === newRole.day && role.shift && role.type !== 'money_counter'
+      );
+
+      for (const existingRole of conflictingShifts) {
+        const existingShiftNum = getShiftNumberInDay(existingRole.shift!);
         
-        // Check money counter conflicts with shifts
-        if (existingRole.type === 'money_counter') {
-          if (existingRole.time === 'lunch' && [2, 3].includes(newShiftNum)) {
-            return { hasConflict: true, reason: `Noon intermission money counting conflicts with Shift ${newShiftNum}` };
-          }
-          if (existingRole.time === 'after_afternoon' && newShiftNum === 4) {
-            return { hasConflict: true, reason: `After afternoon money counting conflicts with Shift ${newShiftNum}` };
-          }
+        // Incompatible shift combinations
+        if (
+          (shiftNumInDay === 1 && existingShiftNum === 2) ||
+          (shiftNumInDay === 2 && existingShiftNum === 1) ||
+          (shiftNumInDay === 3 && existingShiftNum === 4) ||
+          (shiftNumInDay === 4 && existingShiftNum === 3)
+        ) {
+          return { 
+            hasConflict: true, 
+            reason: `Shift ${shiftNumInDay} conflicts with existing Shift ${existingShiftNum} assignment` 
+          };
+        }
+      }
+
+      // Check money counter conflicts
+      const moneyCounterRoles = currentVolunteer.roles.filter(role => 
+        role.type === 'money_counter' && role.day === newRole.day
+      );
+
+      for (const mcRole of moneyCounterRoles) {
+        if (mcRole.time === 'lunch' && (shiftNumInDay === 2 || shiftNumInDay === 3)) {
+          return { 
+            hasConflict: true, 
+            reason: `Shift ${shiftNumInDay} conflicts with lunch money counting` 
+          };
+        }
+        if (mcRole.time === 'after_afternoon' && shiftNumInDay === 4) {
+          return { 
+            hasConflict: true, 
+            reason: `Shift ${shiftNumInDay} conflicts with after afternoon money counting` 
+          };
         }
       }
     }
-    
-    // If adding a money counter role
+
+    // Check money counter conflicts with shifts
     if (newRole.type === 'money_counter') {
-      for (const existingRole of volunteerRoles) {
-        if (existingRole.shift) {
-          const existingShiftNum = getShiftNumberInDay(existingRole.shift);
-          
-          if (newRole.time === 'lunch' && [2, 3].includes(existingShiftNum)) {
-            return { hasConflict: true, reason: `Shift ${existingShiftNum} conflicts with noon intermission money counting` };
-          }
-          if (newRole.time === 'after_afternoon' && existingShiftNum === 4) {
-            return { hasConflict: true, reason: `Shift ${existingShiftNum} conflicts with after afternoon money counting` };
-          }
+      const shiftRoles = currentVolunteer.roles.filter(role => 
+        role.shift && role.day === newRole.day
+      );
+
+      for (const shiftRole of shiftRoles) {
+        const shiftNumInDay = getShiftNumberInDay(shiftRole.shift!);
+        
+        if (newRole.time === 'lunch' && (shiftNumInDay === 2 || shiftNumInDay === 3)) {
+          return { 
+            hasConflict: true, 
+            reason: `Lunch money counting conflicts with Shift ${shiftNumInDay}` 
+          };
+        }
+        if (newRole.time === 'after_afternoon' && shiftNumInDay === 4) {
+          return { 
+            hasConflict: true, 
+            reason: `After afternoon money counting conflicts with Shift ${shiftNumInDay}` 
+          };
         }
       }
     }
 
     return { hasConflict: false, reason: '' };
-  };
+  }, [volunteers, shifts, getShiftNumberInDay]);
 
   const checkScheduleConflicts = useCallback(() => {
     const newConflicts: ScheduleConflict[] = [];
 
     volunteers.forEach(volunteer => {
-      // Group roles by day
-      const rolesByDay = volunteer.roles.reduce((acc, role) => {
-        if (role.day) {
-          if (!acc[role.day]) acc[role.day] = [];
-          acc[role.day].push(role);
-        }
-        return acc;
-      }, {} as Record<string, any[]>);
-
-      // Check each day's assignments
-      Object.entries(rolesByDay).forEach(([day, dayRoles]) => {
-        // Check maximum assignments per day
-        if (dayRoles.length > 2) {
-          newConflicts.push({
-            volunteerId: volunteer.id,
-            volunteerName: `${volunteer.firstName} ${volunteer.lastName}`,
-            conflictType: 'time_overlap',
-            message: `Has ${dayRoles.length} assignments on ${day} (maximum 2 allowed)`,
-            shifts: dayRoles.filter(r => r.shift).map(r => r.shift)
-          });
-        }
-
-        // Check specific conflicts within the day
-        for (let i = 0; i < dayRoles.length; i++) {
-          for (let j = i + 1; j < dayRoles.length; j++) {
-            const role1 = dayRoles[i];
-            const role2 = dayRoles[j];
-            
-            // Check shift-to-shift conflicts
-            if (role1.shift && role2.shift) {
-              const shift1Num = getShiftNumberInDay(role1.shift);
-              const shift2Num = getShiftNumberInDay(role2.shift);
-              
-              const conflictingPairs = [[1, 2], [2, 3], [3, 4]];
-              if (conflictingPairs.some(([a, b]) => 
-                (a === shift1Num && b === shift2Num) || 
-                (a === shift2Num && b === shift1Num)
-              )) {
-                newConflicts.push({
-                  volunteerId: volunteer.id,
-                  volunteerName: `${volunteer.firstName} ${volunteer.lastName}`,
-                  conflictType: 'time_overlap',
-                  message: `Shift ${shift1Num} conflicts with Shift ${shift2Num} on ${day}`,
-                  shifts: [role1.shift, role2.shift]
-                });
-              }
-            }
-            
-            // Check money counter conflicts with shifts
-            const shiftRole = role1.shift ? role1 : role2.shift ? role2 : null;
-            const moneyRole = role1.type === 'money_counter' ? role1 : role2.type === 'money_counter' ? role2 : null;
-            
-            if (shiftRole && moneyRole) {
-              const shiftNum = getShiftNumberInDay(shiftRole.shift);
-              
-              if (moneyRole.time === 'lunch' && [2, 3].includes(shiftNum)) {
-                newConflicts.push({
-                  volunteerId: volunteer.id,
-                  volunteerName: `${volunteer.firstName} ${volunteer.lastName}`,
-                  conflictType: 'time_overlap',
-                  message: `Shift ${shiftNum} conflicts with noon intermission money counting on ${day}`,
-                  shifts: [shiftRole.shift]
-                });
-              }
-              
-              if (moneyRole.time === 'after_afternoon' && shiftNum === 4) {
-                newConflicts.push({
-                  volunteerId: volunteer.id,
-                  volunteerName: `${volunteer.firstName} ${volunteer.lastName}`,
-                  conflictType: 'time_overlap',
-                  message: `Shift ${shiftNum} conflicts with after afternoon money counting on ${day}`,
-                  shifts: [shiftRole.shift]
-                });
-              }
-            }
-          }
-        }
-      });
+      // Check for time overlaps
+      const volunteerShifts = volunteer.roles.filter(role => role.shift).map(role => role.shift!);
+      const uniqueShifts = [...new Set(volunteerShifts)];
+      
+      if (volunteerShifts.length !== uniqueShifts.length) {
+        newConflicts.push({
+          volunteerId: volunteer.id,
+          volunteerName: `${volunteer.firstName} ${volunteer.lastName}`,
+          conflictType: 'time_overlap',
+          message: 'Has overlapping shift assignments',
+          shifts: volunteerShifts
+        });
+      }
 
       // Check gender restrictions for keymen
       if (volunteer.roles.some(role => role.type === 'keyman') && volunteer.gender !== 'male') {
@@ -267,6 +247,41 @@ export function AdminPanel({
           shifts: volunteer.roles.filter(role => role.type === 'keyman').map(role => role.shift || 0)
         });
       }
+
+      // Check money counter conflicts with shifts
+      const moneyCounterRoles = volunteer.roles.filter(role => role.type === 'money_counter');
+      const shiftRoles = volunteer.roles.filter(role => role.shift);
+      
+      moneyCounterRoles.forEach(mcRole => {
+        shiftRoles.forEach(shiftRole => {
+          const shift = shifts.find(s => s.id === shiftRole.shift);
+          if (shift && shift.day === mcRole.day) {
+            const shiftNumInDay = getShiftNumberInDay(shiftRole.shift!);
+            
+            // Check lunch time conflicts (shifts 2 and 3)
+            if (mcRole.time === 'lunch' && (shiftNumInDay === 2 || shiftNumInDay === 3)) {
+              newConflicts.push({
+                volunteerId: volunteer.id,
+                volunteerName: `${volunteer.firstName} ${volunteer.lastName}`,
+                conflictType: 'time_overlap',
+                message: `Money counter (lunch) conflicts with ${shift.day} shift ${shiftNumInDay}`,
+                shifts: [shiftRole.shift!]
+              });
+            }
+            
+            // Check after afternoon conflicts (shift 4)
+            if (mcRole.time === 'after_afternoon' && shiftNumInDay === 4) {
+              newConflicts.push({
+                volunteerId: volunteer.id,
+                volunteerName: `${volunteer.firstName} ${volunteer.lastName}`,
+                conflictType: 'time_overlap',
+                message: `Money counter (after afternoon) conflicts with ${shift.day} shift ${shiftNumInDay}`,
+                shifts: [shiftRole.shift!]
+              });
+            }
+          }
+        });
+      });
     });
 
     // Check if each shift has enough keymen
@@ -290,8 +305,13 @@ export function AdminPanel({
 
     // Check money counting session requirements
     moneyCountingSessions.forEach(session => {
-      const assignedCount = session.assignedVolunteers.length;
-      const brothersCount = session.assignedVolunteers.filter(vId => {
+      // Filter out deleted volunteers from assigned list
+      const validAssignedVolunteers = session.assignedVolunteers.filter(vId => 
+        volunteers.some(v => v.id === vId)
+      );
+      
+      const assignedCount = validAssignedVolunteers.length;
+      const brothersCount = validAssignedVolunteers.filter(vId => {
         const volunteer = volunteers.find(v => v.id === vId);
         return volunteer?.gender === 'male';
       }).length;
@@ -318,7 +338,7 @@ export function AdminPanel({
     });
 
     setConflicts(newConflicts);
-  }, [volunteers, shifts, moneyCountingSessions]);
+  }, [volunteers, shifts, moneyCountingSessions, getShiftNumberInDay]);
 
   const handleAddVolunteer = () => {
     const newVolunteer: Volunteer = {
@@ -346,44 +366,59 @@ export function AdminPanel({
   };
 
   const handleDeleteVolunteer = (volunteerId: string) => {
-    if (confirm('Are you sure you want to delete this volunteer?')) {
-      onVolunteersUpdate(volunteers.filter(v => v.id !== volunteerId));
+    if (confirm('Are you sure you want to delete this volunteer? This will remove all their assignments.')) {
+      // Remove volunteer from volunteers list
+      const updatedVolunteers = volunteers.filter(v => v.id !== volunteerId);
+      
+      // Remove volunteer from money counting sessions
+      const updatedSessions = moneyCountingSessions.map(session => ({
+        ...session,
+        assignedVolunteers: session.assignedVolunteers.filter(id => id !== volunteerId)
+      }));
+      
+      onVolunteersUpdate(updatedVolunteers);
+      setMoneyCountingSessions(updatedSessions);
       checkScheduleConflicts();
     }
   };
 
   const handleAssignToMoneyCounter = (volunteerId: string, sessionId: string) => {
     const session = moneyCountingSessions.find(s => s.id === sessionId);
-    if (!session) return;
+    const volunteer = volunteers.find(v => v.id === volunteerId);
+    if (!session || !volunteer) return;
 
+    // Check for conflicts
     const newRole = {
       type: 'money_counter' as const,
-      status: 'assigned' as const,
       day: session.day,
-      location: 'Counting Table',
       time: session.time,
       timeLabel: session.timeLabel
     };
 
-    // Check for conflicts
-    const volunteer = volunteers.find(v => v.id === volunteerId);
-    if (volunteer) {
-      const conflictCheck = hasSchedulingConflict(volunteer, newRole);
-      if (conflictCheck.hasConflict) {
-        alert(`Cannot assign: ${conflictCheck.reason}`);
-        return;
-      }
+    const conflictCheck = hasSchedulingConflict(volunteer, newRole);
+    if (conflictCheck.hasConflict) {
+      alert(`Cannot assign: ${conflictCheck.reason}`);
+      return;
     }
 
     // Update volunteer roles
-    const updatedVolunteers = volunteers.map(volunteer => {
-      if (volunteer.id === volunteerId) {
+    const updatedVolunteers = volunteers.map(v => {
+      if (v.id === volunteerId) {
+        const roleToAdd = {
+          type: 'money_counter' as const,
+          status: 'assigned' as const,
+          day: session.day,
+          location: 'Counting Table',
+          time: session.time,
+          timeLabel: session.timeLabel
+        };
+
         return {
-          ...volunteer,
-          roles: [...volunteer.roles, newRole]
+          ...v,
+          roles: [...v.roles, roleToAdd]
         };
       }
-      return volunteer;
+      return v;
     });
 
     // Update money counting session
@@ -571,7 +606,6 @@ export function AdminPanel({
               shifts={shifts}
               onShowShiftAssignment={() => setShowShiftAssignment(true)}
               getShiftNumberInDay={getShiftNumberInDay}
-              hasSchedulingConflict={hasSchedulingConflict}
             />
           )}
 
@@ -583,7 +617,6 @@ export function AdminPanel({
               onAssignToMoneyCounter={handleAssignToMoneyCounter}
               onRemoveFromMoneyCounter={handleRemoveFromMoneyCounter}
               onUpdateMoneyCountingSessions={setMoneyCountingSessions}
-              hasSchedulingConflict={hasSchedulingConflict}
             />
           )}
 
@@ -612,14 +645,12 @@ function ShiftManagement({
   volunteers,
   shifts,
   onShowShiftAssignment,
-  getShiftNumberInDay,
-  hasSchedulingConflict
+  getShiftNumberInDay
 }: {
   volunteers: Volunteer[];
   shifts: Shift[];
   onShowShiftAssignment: () => void;
   getShiftNumberInDay: (shiftId: number) => number;
-  hasSchedulingConflict: (volunteer: Volunteer, newRole: any) => { hasConflict: boolean; reason: string };
 }) {
   const getShiftsByDay = () => {
     const shiftsByDay: Record<string, Shift[]> = {};
@@ -662,10 +693,7 @@ function ShiftManagement({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Shift Assignment Center</h3>
-            <p className="text-gray-600">Assign publishers to shifts and boxes with conflict detection</p>
-            <div className="mt-2 text-sm text-blue-600">
-              <strong>Scheduling Rules:</strong> Max 2 assignments per day. Compatible shifts: 1↔3, 2↔4. Money counting conflicts with specific shifts.
-            </div>
+            <p className="text-gray-600">Assign publishers to shifts and boxes quickly and efficiently</p>
           </div>
           <button
             onClick={onShowShiftAssignment}
@@ -1002,15 +1030,14 @@ function VolunteerManagement({
   );
 }
 
-// Scheduling Management Component
+// Scheduling Management Component (existing - no changes)
 function SchedulingManagement({
   volunteers,
   shifts,
   moneyCountingSessions,
   onAssignToMoneyCounter,
   onRemoveFromMoneyCounter,
-  onUpdateMoneyCountingSessions,
-  hasSchedulingConflict
+  onUpdateMoneyCountingSessions
 }: {
   volunteers: Volunteer[];
   shifts: Shift[];
@@ -1018,7 +1045,6 @@ function SchedulingManagement({
   onAssignToMoneyCounter: (volunteerId: string, sessionId: string) => void;
   onRemoveFromMoneyCounter: (volunteerId: string, sessionId: string) => void;
   onUpdateMoneyCountingSessions: (sessions: MoneyCountingSession[]) => void;
-  hasSchedulingConflict: (volunteer: Volunteer, newRole: any) => { hasConflict: boolean; reason: string };
 }) {
   const [selectedMoneySession, setSelectedMoneySession] = useState<string | null>(null);
 
@@ -1060,8 +1086,12 @@ function SchedulingManagement({
 
               <div className="space-y-3">
                 {sessionsByDay[day]?.map(session => {
-                  const assignedCount = session.assignedVolunteers.length;
-                  const brothersCount = session.assignedVolunteers.filter(vId => {
+                  // Filter out deleted volunteers
+                  const validAssignedVolunteers = session.assignedVolunteers.filter(vId => 
+                    volunteers.some(v => v.id === vId)
+                  );
+                  const assignedCount = validAssignedVolunteers.length;
+                  const brothersCount = validAssignedVolunteers.filter(vId => {
                     const volunteer = volunteers.find(v => v.id === vId);
                     return volunteer?.gender === 'male';
                   }).length;
@@ -1114,29 +1144,31 @@ function SchedulingManagement({
           volunteers={volunteers}
           onAssignToMoneyCounter={onAssignToMoneyCounter}
           onRemoveFromMoneyCounter={onRemoveFromMoneyCounter}
-          hasSchedulingConflict={hasSchedulingConflict}
         />
       )}
     </div>
   );
 }
 
-// Money Counting Detail View Component
+// Money Counting Detail View Component (existing - no changes)
 function MoneyCountingDetailView({
   session,
   volunteers,
   onAssignToMoneyCounter,
-  onRemoveFromMoneyCounter,
-  hasSchedulingConflict
+  onRemoveFromMoneyCounter
 }: {
   session: MoneyCountingSession;
   volunteers: Volunteer[];
   onAssignToMoneyCounter: (volunteerId: string, sessionId: string) => void;
   onRemoveFromMoneyCounter: (volunteerId: string, sessionId: string) => void;
-  hasSchedulingConflict: (volunteer: Volunteer, newRole: any) => { hasConflict: boolean; reason: string };
 }) {
+  // Filter out deleted volunteers from assigned list
+  const validAssignedVolunteers = session.assignedVolunteers.filter(vId => 
+    volunteers.some(v => v.id === vId)
+  );
+  
   const assignedVolunteers = volunteers.filter(v => 
-    session.assignedVolunteers.includes(v.id)
+    validAssignedVolunteers.includes(v.id)
   );
 
   const getAvailableVolunteers = () => {
@@ -1145,18 +1177,36 @@ function MoneyCountingDetailView({
       if (!v.privileges.includes('money_counter')) return false;
       
       // Must not already be assigned to this session
-      if (session.assignedVolunteers.includes(v.id)) return false;
+      if (validAssignedVolunteers.includes(v.id)) return false;
       
-      // Check for scheduling conflicts
-      const newRole = {
-        type: 'money_counter' as const,
-        day: session.day,
-        time: session.time,
-        timeLabel: session.timeLabel
-      };
+      // Check for shift conflicts
+      const hasConflictingShift = v.roles.some(role => {
+        if (!role.shift || role.day !== session.day) return false;
+        
+        // Get shift number within day (1-4)
+        const shifts = [
+          { id: 1, day: 'Friday', num: 1 }, { id: 2, day: 'Friday', num: 2 }, { id: 3, day: 'Friday', num: 3 }, { id: 4, day: 'Friday', num: 4 },
+          { id: 5, day: 'Saturday', num: 1 }, { id: 6, day: 'Saturday', num: 2 }, { id: 7, day: 'Saturday', num: 3 }, { id: 8, day: 'Saturday', num: 4 },
+          { id: 9, day: 'Sunday', num: 1 }, { id: 10, day: 'Sunday', num: 2 }, { id: 11, day: 'Sunday', num: 3 }, { id: 12, day: 'Sunday', num: 4 }
+        ];
+        
+        const shiftInfo = shifts.find(s => s.id === role.shift);
+        if (!shiftInfo) return false;
+        
+        // Lunch time conflicts (shifts 2 and 3)
+        if (session.time === 'lunch') {
+          return shiftInfo.num === 2 || shiftInfo.num === 3;
+        }
+        
+        // After afternoon conflicts (shift 4)
+        if (session.time === 'after_afternoon') {
+          return shiftInfo.num === 4;
+        }
+        
+        return false;
+      });
       
-      const conflictCheck = hasSchedulingConflict(v, newRole);
-      return !conflictCheck.hasConflict;
+      return !hasConflictingShift;
     });
   };
 
@@ -1242,7 +1292,7 @@ function MoneyCountingDetailView({
             
             {availableVolunteers.length === 0 && (
               <div className="text-center py-4 text-gray-500 text-sm">
-                No available volunteers without conflicts
+                No available volunteers
               </div>
             )}
           </div>
@@ -1323,7 +1373,6 @@ function ConflictManagement({
         <div className="text-center py-8">
           <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
           <p className="text-gray-600">No scheduling conflicts detected!</p>
-          <p className="text-sm text-gray-500 mt-2">All assignments follow the scheduling rules.</p>
         </div>
       ) : (
         <div className="space-y-3">
