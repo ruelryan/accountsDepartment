@@ -162,10 +162,10 @@ export function DailyScheduleSummary({
             <p className="text-gray-600 mt-1">{getDateString(selectedDate)}</p>
           </div>
 
-          {/* Morning Shifts */}
+          {/* Shifts */}
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              📋 <span className="ml-2">Morning Shifts</span>
+              📋 <span className="ml-2">Shifts</span>
             </h3>
             
             <div className="space-y-6">
