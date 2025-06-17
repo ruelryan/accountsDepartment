@@ -3,9 +3,10 @@ import { LoginPage } from './components/LoginPage';
 import { AdminDashboard } from './components/AdminDashboard';
 import { DailyScheduleSummary } from './components/DailyScheduleSummary';
 import { EnhancedVolunteerPortal } from './components/EnhancedVolunteerPortal';
+import { MinimalistDashboard } from './components/MinimalistDashboard';
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { Volunteer, Box } from './types';
-import { Database, Cloud, CloudOff, Loader2 } from 'lucide-react';
+import { Database, Cloud, CloudOff, Loader2, Minimize2 } from 'lucide-react';
 
 function App() {
   const {
@@ -22,7 +23,7 @@ function App() {
 
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [currentView, setCurrentView] = useState<'daily_schedule' | 'volunteer_portal'>('daily_schedule');
+  const [currentView, setCurrentView] = useState<'daily_schedule' | 'volunteer_portal' | 'minimalist'>('daily_schedule');
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
 
   const handleStatusChange = useCallback(async (volunteerId: string, newStatus: string) => {
@@ -166,6 +167,18 @@ function App() {
     );
   }
 
+  // Show minimalist dashboard
+  if (currentView === 'minimalist') {
+    return (
+      <MinimalistDashboard
+        volunteers={volunteers}
+        shifts={shifts}
+        boxes={boxes}
+        onBack={() => setCurrentView('daily_schedule')}
+      />
+    );
+  }
+
   // Show volunteer portal if selected or searching
   if (currentView === 'volunteer_portal') {
     return (
@@ -189,8 +202,16 @@ function App() {
         onSearchVolunteers={handleSearchVolunteers}
       />
       
-      {/* Admin Login Button - Fixed Position */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* Action Buttons - Fixed Position */}
+      <div className="fixed top-4 right-4 z-50 flex items-center space-x-2">
+        <button
+          onClick={() => setCurrentView('minimalist')}
+          className="flex items-center space-x-2 px-3 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm border border-gray-200"
+        >
+          <Minimize2 className="w-4 h-4" />
+          <span className="hidden sm:inline">Simple View</span>
+        </button>
+        
         <button
           onClick={() => setShowLogin(true)}
           className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
