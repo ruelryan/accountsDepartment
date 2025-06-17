@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Volunteer, Shift, MoneyCountingSession } from '../types';
 import { ShiftAssignmentPanel } from './ShiftAssignmentPanel';
+import { VolunteerManagementView } from './VolunteerManagementView';
 import { 
   Users, 
   Plus, 
@@ -19,7 +20,8 @@ import {
   Database,
   RefreshCw,
   Search,
-  Filter
+  Filter,
+  Eye
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -41,7 +43,7 @@ export function AdminPanel({
   isOnline,
   lastSynced
 }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState<'volunteers' | 'assignments' | 'money_counting'>('volunteers');
+  const [activeTab, setActiveTab] = useState<'volunteers' | 'assignments' | 'money_counting' | 'overview'>('volunteers');
   const [showAssignmentPanel, setShowAssignmentPanel] = useState(false);
   const [editingVolunteer, setEditingVolunteer] = useState<Volunteer | null>(null);
   const [showAddVolunteer, setShowAddVolunteer] = useState(false);
@@ -50,7 +52,7 @@ export function AdminPanel({
   const [isLoading, setIsLoading] = useState(false);
   const [lastAction, setLastAction] = useState<string>('');
 
-  // Money counting sessions
+  // Money counting sessions with updated maximum of 8
   const [moneyCountingSessions] = useState<MoneyCountingSession[]>([
     {
       id: 'friday-lunch',
@@ -58,8 +60,8 @@ export function AdminPanel({
       time: 'lunch',
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
-      requiredCount: 4,
-      minimumBrothers: 2
+      requiredCount: 8,
+      minimumBrothers: 4
     },
     {
       id: 'friday-afternoon',
@@ -67,8 +69,8 @@ export function AdminPanel({
       time: 'after_afternoon',
       timeLabel: 'After Afternoon Session',
       assignedVolunteers: [],
-      requiredCount: 4,
-      minimumBrothers: 2
+      requiredCount: 8,
+      minimumBrothers: 4
     },
     {
       id: 'saturday-lunch',
@@ -76,8 +78,8 @@ export function AdminPanel({
       time: 'lunch',
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
-      requiredCount: 4,
-      minimumBrothers: 2
+      requiredCount: 8,
+      minimumBrothers: 4
     },
     {
       id: 'saturday-afternoon',
@@ -85,8 +87,8 @@ export function AdminPanel({
       time: 'after_afternoon', 
       timeLabel: 'After Afternoon Session',
       assignedVolunteers: [],
-      requiredCount: 4,
-      minimumBrothers: 2
+      requiredCount: 8,
+      minimumBrothers: 4
     },
     {
       id: 'sunday-lunch',
@@ -94,8 +96,8 @@ export function AdminPanel({
       time: 'lunch',
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
-      requiredCount: 4,
-      minimumBrothers: 2
+      requiredCount: 8,
+      minimumBrothers: 4
     },
     {
       id: 'sunday-afternoon',
@@ -103,8 +105,8 @@ export function AdminPanel({
       time: 'after_afternoon',
       timeLabel: 'After Afternoon Session', 
       assignedVolunteers: [],
-      requiredCount: 4,
-      minimumBrothers: 2
+      requiredCount: 8,
+      minimumBrothers: 4
     }
   ]);
 
@@ -471,6 +473,17 @@ export function AdminPanel({
               <DollarSign className="w-4 h-4 inline mr-2" />
               Money Counting
             </button>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'overview'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Eye className="w-4 h-4 inline mr-2" />
+              Management Overview
+            </button>
           </nav>
         </div>
       </div>
@@ -589,6 +602,17 @@ export function AdminPanel({
               ))}
             </div>
           </div>
+        )}
+
+        {/* Management Overview Tab */}
+        {activeTab === 'overview' && (
+          <VolunteerManagementView
+            volunteers={volunteers}
+            shifts={shifts}
+            onVolunteersUpdate={onVolunteersUpdate}
+            isOnline={isOnline}
+            lastSynced={lastSynced}
+          />
         )}
       </div>
 
