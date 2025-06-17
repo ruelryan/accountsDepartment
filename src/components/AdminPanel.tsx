@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Volunteer, Shift, MoneyCountingSession } from '../types';
 import { ShiftAssignmentPanel } from './ShiftAssignmentPanel';
 import { VolunteerManagementView } from './VolunteerManagementView';
+import { WeeklyScheduleView } from './WeeklyScheduleView';
 import { 
   Users, 
   Plus, 
@@ -21,7 +22,8 @@ import {
   RefreshCw,
   Search,
   Filter,
-  Eye
+  Eye,
+  CalendarDays
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -43,7 +45,7 @@ export function AdminPanel({
   isOnline,
   lastSynced
 }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState<'volunteers' | 'assignments' | 'money_counting' | 'overview'>('volunteers');
+  const [activeTab, setActiveTab] = useState<'volunteers' | 'assignments' | 'money_counting' | 'overview' | 'schedule'>('volunteers');
   const [showAssignmentPanel, setShowAssignmentPanel] = useState(false);
   const [editingVolunteer, setEditingVolunteer] = useState<Volunteer | null>(null);
   const [showAddVolunteer, setShowAddVolunteer] = useState(false);
@@ -484,6 +486,17 @@ export function AdminPanel({
               <Eye className="w-4 h-4 inline mr-2" />
               Management Overview
             </button>
+            <button
+              onClick={() => setActiveTab('schedule')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'schedule'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <CalendarDays className="w-4 h-4 inline mr-2" />
+              Weekly Schedule
+            </button>
           </nav>
         </div>
       </div>
@@ -607,6 +620,17 @@ export function AdminPanel({
         {/* Management Overview Tab */}
         {activeTab === 'overview' && (
           <VolunteerManagementView
+            volunteers={volunteers}
+            shifts={shifts}
+            onVolunteersUpdate={onVolunteersUpdate}
+            isOnline={isOnline}
+            lastSynced={lastSynced}
+          />
+        )}
+
+        {/* Weekly Schedule Tab */}
+        {activeTab === 'schedule' && (
+          <WeeklyScheduleView
             volunteers={volunteers}
             shifts={shifts}
             onVolunteersUpdate={onVolunteersUpdate}
