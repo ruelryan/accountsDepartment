@@ -56,7 +56,7 @@ export function AdminPanel({
   const [isLoading, setIsLoading] = useState(false);
   const [lastAction, setLastAction] = useState<string>('');
 
-  // Money counting sessions with updated maximum of 8
+  // Money counting sessions with updated minimum of 2 brothers
   const [moneyCountingSessions] = useState<MoneyCountingSession[]>([
     {
       id: 'friday-lunch',
@@ -65,7 +65,7 @@ export function AdminPanel({
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'friday-afternoon',
@@ -74,7 +74,7 @@ export function AdminPanel({
       timeLabel: 'After Afternoon Session',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'saturday-lunch',
@@ -83,7 +83,7 @@ export function AdminPanel({
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'saturday-afternoon',
@@ -92,7 +92,7 @@ export function AdminPanel({
       timeLabel: 'After Afternoon Session',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'sunday-lunch',
@@ -101,7 +101,7 @@ export function AdminPanel({
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'sunday-afternoon',
@@ -110,7 +110,7 @@ export function AdminPanel({
       timeLabel: 'After Afternoon Session', 
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     }
   ]);
 

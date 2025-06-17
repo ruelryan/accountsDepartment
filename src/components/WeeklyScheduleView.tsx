@@ -31,7 +31,7 @@ export function WeeklyScheduleView({
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-  // Money counting sessions
+  // Money counting sessions with updated minimum of 2 brothers
   const moneyCountingSessions: MoneyCountingSession[] = [
     {
       id: 'friday-lunch',
@@ -40,7 +40,7 @@ export function WeeklyScheduleView({
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'friday-afternoon',
@@ -49,7 +49,7 @@ export function WeeklyScheduleView({
       timeLabel: 'After Afternoon Session',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'saturday-lunch',
@@ -58,7 +58,7 @@ export function WeeklyScheduleView({
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'saturday-afternoon',
@@ -67,7 +67,7 @@ export function WeeklyScheduleView({
       timeLabel: 'After Afternoon Session',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'sunday-lunch',
@@ -76,7 +76,7 @@ export function WeeklyScheduleView({
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'sunday-afternoon',
@@ -85,7 +85,7 @@ export function WeeklyScheduleView({
       timeLabel: 'After Afternoon Session', 
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     }
   ];
 
@@ -482,7 +482,7 @@ export function WeeklyScheduleView({
                                   <div className="text-xs text-purple-700">Total Assigned</div>
                                 </div>
                                 <div className="text-center p-2 bg-blue-50 rounded">
-                                  <div className="text-lg font-bold text-blue-600">{brothers.length}/4</div>
+                                  <div className="text-lg font-bold text-blue-600">{brothers.length}/2</div>
                                   <div className="text-xs text-blue-700">Brothers (Min)</div>
                                 </div>
                               </div>

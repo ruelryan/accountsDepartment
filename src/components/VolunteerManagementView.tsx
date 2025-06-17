@@ -34,7 +34,7 @@ export function VolunteerManagementView({
   const [activeTab, setActiveTab] = useState<'shifts' | 'money_counting'>('shifts');
   const [selectedDay, setSelectedDay] = useState<string>('Friday');
 
-  // Money counting sessions with updated maximum of 8
+  // Money counting sessions with updated minimum of 2 brothers
   const moneyCountingSessions: MoneyCountingSession[] = [
     {
       id: 'friday-lunch',
@@ -43,7 +43,7 @@ export function VolunteerManagementView({
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'friday-afternoon',
@@ -52,7 +52,7 @@ export function VolunteerManagementView({
       timeLabel: 'After Afternoon Session',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'saturday-lunch',
@@ -61,7 +61,7 @@ export function VolunteerManagementView({
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'saturday-afternoon',
@@ -70,7 +70,7 @@ export function VolunteerManagementView({
       timeLabel: 'After Afternoon Session',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'sunday-lunch',
@@ -79,7 +79,7 @@ export function VolunteerManagementView({
       timeLabel: 'Lunch Break',
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     },
     {
       id: 'sunday-afternoon',
@@ -88,7 +88,7 @@ export function VolunteerManagementView({
       timeLabel: 'After Afternoon Session', 
       assignedVolunteers: [],
       requiredCount: 8,
-      minimumBrothers: 4
+      minimumBrothers: 2
     }
   ];
 
@@ -505,7 +505,7 @@ function MoneyCountingView({
                   <div className="text-xs text-gray-500">Total Assigned</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{brothers.length}/4</div>
+                  <div className="text-2xl font-bold text-blue-600">{brothers.length}/2</div>
                   <div className="text-xs text-gray-500">Brothers (Min)</div>
                 </div>
               </div>
