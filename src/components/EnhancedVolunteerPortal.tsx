@@ -24,11 +24,22 @@ interface EnhancedVolunteerPortalProps {
   volunteers: Volunteer[];
   shifts: Shift[];
   onAdminLogin?: () => void;
+  selectedVolunteer?: Volunteer | null;
+  onBack?: () => void;
 }
 
-export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: EnhancedVolunteerPortalProps) {
-  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
+export function EnhancedVolunteerPortal({ 
+  volunteers, 
+  shifts, 
+  onAdminLogin,
+  selectedVolunteer,
+  onBack
+}: EnhancedVolunteerPortalProps) {
+  const [internalSelectedVolunteer, setInternalSelectedVolunteer] = useState<Volunteer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Use prop selectedVolunteer if provided, otherwise use internal state
+  const currentSelectedVolunteer = selectedVolunteer || internalSelectedVolunteer;
 
   // Filter volunteers based on search term
   const filteredVolunteers = useMemo(() => {
@@ -49,19 +60,32 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: En
   }, [volunteers, searchTerm]);
 
   const handleVolunteerSelect = (volunteer: Volunteer) => {
-    setSelectedVolunteer(volunteer);
+    if (selectedVolunteer) {
+      // If selectedVolunteer prop is provided, we're in controlled mode
+      // Don't change selection internally
+      return;
+    }
+    setInternalSelectedVolunteer(volunteer);
+  };
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      setInternalSelectedVolunteer(null);
+    }
   };
 
   const clearSearch = () => {
     setSearchTerm('');
   };
 
-  if (selectedVolunteer) {
+  if (currentSelectedVolunteer) {
     return (
       <VolunteerDashboard 
-        volunteer={selectedVolunteer} 
+        volunteer={currentSelectedVolunteer} 
         shifts={shifts}
-        onBack={() => setSelectedVolunteer(null)} 
+        onBack={handleBack}
         onAdminLogin={onAdminLogin}
       />
     );
@@ -69,11 +93,20 @@ export function EnhancedVolunteerPortal({ volunteers, shifts, onAdminLogin }: En
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50">
-      {/* Header with Admin Login */}
+      {/* Header with Admin Login and Back Button */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 min-w-0 flex-1">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors mr-4"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  <span className="hidden sm:inline">Back to Schedule</span>
+                </button>
+              )}
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-teal-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
                 <Users className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>

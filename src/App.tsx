@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { LoginPage } from './components/LoginPage';
 import { AdminDashboard } from './components/AdminDashboard';
+import { DailyScheduleSummary } from './components/DailyScheduleSummary';
 import { EnhancedVolunteerPortal } from './components/EnhancedVolunteerPortal';
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { Volunteer, Box } from './types';
@@ -21,6 +22,8 @@ function App() {
 
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [currentView, setCurrentView] = useState<'daily_schedule' | 'volunteer_portal'>('daily_schedule');
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
 
   const handleStatusChange = useCallback(async (volunteerId: string, newStatus: string) => {
     const updatedVolunteers = volunteers.map(volunteer => 
@@ -90,6 +93,20 @@ function App() {
     setShowLogin(false);
   };
 
+  const handleVolunteerSelect = (volunteer: Volunteer) => {
+    setSelectedVolunteer(volunteer);
+    setCurrentView('volunteer_portal');
+  };
+
+  const handleSearchVolunteers = () => {
+    setCurrentView('volunteer_portal');
+  };
+
+  const handleBackToSchedule = () => {
+    setSelectedVolunteer(null);
+    setCurrentView('daily_schedule');
+  };
+
   // Show loading screen while initializing
   if (isLoading) {
     return (
@@ -149,14 +166,38 @@ function App() {
     );
   }
 
-  // Default view: Volunteer Portal with admin login option
-  return (
-    <>
+  // Show volunteer portal if selected or searching
+  if (currentView === 'volunteer_portal') {
+    return (
       <EnhancedVolunteerPortal 
         volunteers={volunteers}
         shifts={shifts}
         onAdminLogin={() => setShowLogin(true)}
+        selectedVolunteer={selectedVolunteer}
+        onBack={handleBackToSchedule}
       />
+    );
+  }
+
+  // Default view: Daily Schedule Summary (Homepage)
+  return (
+    <>
+      <DailyScheduleSummary
+        volunteers={volunteers}
+        shifts={shifts}
+        onVolunteerSelect={handleVolunteerSelect}
+        onSearchVolunteers={handleSearchVolunteers}
+      />
+      
+      {/* Admin Login Button - Fixed Position */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={() => setShowLogin(true)}
+          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
+        >
+          <span>Admin Login</span>
+        </button>
+      </div>
       
       {/* Connection Status Indicator */}
       <div className="fixed bottom-4 left-4 z-50">
