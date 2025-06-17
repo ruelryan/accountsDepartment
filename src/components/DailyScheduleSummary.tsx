@@ -196,8 +196,8 @@ export function DailyScheduleSummary({
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Daily Schedule Overview</h1>
           <p className="text-lg text-gray-600 mb-6">Convention Accounts Department • July 11-13, 2025</p>
           
-          {/* Volunteer Search */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+          {/* Volunteer Search - FIXED Z-INDEX */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8 relative">
             <div className="max-w-md mx-auto">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Find Your Assignment</h2>
               <div className="relative">
@@ -221,9 +221,9 @@ export function DailyScheduleSummary({
                 )}
               </div>
               
-              {/* Search Results Dropdown */}
+              {/* Search Results Dropdown - FIXED WITH HIGH Z-INDEX */}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute z-50 mt-2 w-full max-w-md mx-auto bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 overflow-y-auto">
+                <div className="absolute z-[9999] mt-2 w-full max-w-md left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
                   <div className="p-2">
                     <div className="text-xs text-gray-500 px-3 py-2 font-medium">
                       Found {searchResults.length} volunteer{searchResults.length !== 1 ? 's' : ''}
@@ -270,9 +270,9 @@ export function DailyScheduleSummary({
                 </div>
               )}
               
-              {/* No Results */}
+              {/* No Results - FIXED WITH HIGH Z-INDEX */}
               {showSearchResults && searchResults.length === 0 && searchTerm.trim() && (
-                <div className="absolute z-50 mt-2 w-full max-w-md mx-auto bg-white border border-gray-200 rounded-xl shadow-lg p-4">
+                <div className="absolute z-[9999] mt-2 w-full max-w-md left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-xl shadow-2xl p-4">
                   <div className="text-center text-gray-500">
                     <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                     <p className="text-sm">No volunteers found matching "{searchTerm}"</p>
