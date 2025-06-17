@@ -47,14 +47,27 @@ export function DailyScheduleSummary({
     return index + 1;
   };
 
-  // Get volunteers assigned to a specific shift and role
+  // Get volunteers assigned to a specific shift and role, sorted by box number
   const getShiftVolunteers = (shiftId: number, roleType: 'box_watcher' | 'keyman') => {
-    return volunteers.filter(v => 
+    const shiftVolunteers = volunteers.filter(v => 
       v.roles.some(role => 
         role.type === roleType && 
         role.shift === shiftId
       )
     );
+
+    // Sort box watchers by box number, keymen alphabetically
+    if (roleType === 'box_watcher') {
+      return shiftVolunteers.sort((a, b) => {
+        const aRole = a.roles.find(r => r.type === 'box_watcher' && r.shift === shiftId);
+        const bRole = b.roles.find(r => r.type === 'box_watcher' && r.shift === shiftId);
+        const aBoxNum = aRole?.boxNumber || 999;
+        const bBoxNum = bRole?.boxNumber || 999;
+        return aBoxNum - bBoxNum;
+      });
+    } else {
+      return shiftVolunteers.sort((a, b) => a.lastName.localeCompare(b.lastName));
+    }
   };
 
   // Get money counter volunteers for a specific day and session
@@ -65,7 +78,7 @@ export function DailyScheduleSummary({
         role.day === day && 
         role.time === time
       )
-    );
+    ).sort((a, b) => a.lastName.localeCompare(b.lastName));
   };
 
   // Get shifts for selected date
@@ -139,7 +152,7 @@ export function DailyScheduleSummary({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50">
-      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
@@ -153,7 +166,7 @@ export function DailyScheduleSummary({
           {/* Date Picker */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
             <p className="text-gray-700 font-medium mb-4">Please select a date to view assignments:</p>
-            <div className="flex justify-center space-x-3">
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
               {days.map(day => (
                 <button
                   key={day}
@@ -199,11 +212,11 @@ export function DailyScheduleSummary({
 
                 return (
                   <div key={shift.id} className="bg-gradient-to-r from-gray-50 to-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                       <div>
-                        <h4 className="text-lg font-bold text-gray-900 flex items-center">
+                        <h4 className="text-lg font-bold text-gray-900 flex flex-col sm:flex-row sm:items-center gap-2">
                           Shift {shiftNumInDay}
-                          <span className="ml-3 text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                          <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
                             {shift.startTime} - {shift.endTime}
                           </span>
                         </h4>
@@ -241,8 +254,8 @@ export function DailyScheduleSummary({
                         </div>
                         
                         {boxWatchers.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {boxWatchers.slice(0, 8).map(volunteer => {
+                          <div className="grid grid-cols-1 gap-2">
+                            {boxWatchers.map(volunteer => {
                               const role = volunteer.roles.find(r => r.type === 'box_watcher' && r.shift === shift.id);
                               return (
                                 <button
@@ -251,14 +264,14 @@ export function DailyScheduleSummary({
                                   className="text-left p-3 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all group shadow-sm"
                                 >
                                   <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                      <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                                      <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                                         <span className="text-white font-bold text-xs">
                                           {volunteer.firstName[0]}{volunteer.lastName[0]}
                                         </span>
                                       </div>
-                                      <div>
-                                        <div className="font-medium text-gray-900 group-hover:text-blue-700 text-sm">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="font-medium text-gray-900 group-hover:text-blue-700 text-sm truncate">
                                           {volunteer.firstName} {volunteer.lastName}
                                         </div>
                                         <div className="text-xs text-gray-500">
@@ -267,7 +280,7 @@ export function DailyScheduleSummary({
                                       </div>
                                     </div>
                                     {role?.boxNumber && (
-                                      <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded font-medium">
+                                      <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded font-medium flex-shrink-0 ml-2">
                                         Box #{role.boxNumber}
                                       </span>
                                     )}
@@ -275,13 +288,6 @@ export function DailyScheduleSummary({
                                 </button>
                               );
                             })}
-                            {boxWatchers.length > 8 && (
-                              <div className="col-span-2 text-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                <span className="text-sm text-gray-600 font-medium">
-                                  +{boxWatchers.length - 8} more volunteers
-                                </span>
-                              </div>
-                            )}
                           </div>
                         ) : (
                           <div className="text-center py-6 bg-gray-50 border border-gray-200 rounded-lg">
@@ -308,7 +314,7 @@ export function DailyScheduleSummary({
                         </div>
                         
                         {keymen.length > 0 ? (
-                          <div className="space-y-3">
+                          <div className="space-y-2">
                             {keymen.map(volunteer => (
                               <button
                                 key={volunteer.id}
@@ -316,13 +322,13 @@ export function DailyScheduleSummary({
                                 className="w-full text-left p-3 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-all group shadow-sm"
                               >
                                 <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                                  <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
                                     <span className="text-white font-bold text-xs">
                                       {volunteer.firstName[0]}{volunteer.lastName[0]}
                                     </span>
                                   </div>
-                                  <div>
-                                    <div className="font-medium text-gray-900 group-hover:text-green-700 text-sm">
+                                  <div className="min-w-0 flex-1">
+                                    <div className="font-medium text-gray-900 group-hover:text-green-700 text-sm truncate">
                                       {volunteer.firstName} {volunteer.lastName}
                                     </div>
                                     <div className="text-xs text-gray-500">
@@ -356,11 +362,11 @@ export function DailyScheduleSummary({
             <div className="space-y-6">
               {moneyCountingSessions.map(session => (
                 <div key={session.id} className="bg-gradient-to-r from-purple-50 to-white rounded-xl p-6 border border-purple-200 shadow-sm">
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900 flex items-center">
+                      <h4 className="text-lg font-bold text-gray-900 flex flex-col sm:flex-row sm:items-center gap-2">
                         {session.timeLabel}
-                        <span className="ml-3 text-sm text-gray-600 bg-purple-100 px-3 py-1 rounded-full">
+                        <span className="text-sm text-gray-600 bg-purple-100 px-3 py-1 rounded-full">
                           {session.displayTime}
                         </span>
                       </h4>
@@ -375,21 +381,21 @@ export function DailyScheduleSummary({
                   </div>
 
                   {session.volunteers.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                      {session.volunteers.slice(0, 8).map(volunteer => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {session.volunteers.map(volunteer => (
                         <button
                           key={volunteer.id}
                           onClick={() => onVolunteerSelect(volunteer)}
                           className="text-left p-3 bg-white border border-purple-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-all group shadow-sm"
                         >
                           <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                               <span className="text-white font-bold text-xs">
                                 {volunteer.firstName[0]}{volunteer.lastName[0]}
                               </span>
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 group-hover:text-purple-700">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-gray-900 group-hover:text-purple-700 truncate">
                                 {volunteer.firstName} {volunteer.lastName}
                               </div>
                               <div className="text-xs text-gray-500">
@@ -489,7 +495,7 @@ export function DailyScheduleSummary({
                       className="text-left p-4 bg-white border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-all group shadow-sm hover:shadow-md"
                     >
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center shadow-md">
+                        <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
                           <span className="text-white font-bold text-sm">
                             {volunteer.firstName[0]}{volunteer.lastName[0]}
                           </span>
