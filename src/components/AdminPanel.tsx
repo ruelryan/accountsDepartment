@@ -3,6 +3,7 @@ import { Volunteer, Shift, MoneyCountingSession } from '../types';
 import { ShiftAssignmentPanel } from './ShiftAssignmentPanel';
 import { VolunteerManagementView } from './VolunteerManagementView';
 import { WeeklyScheduleView } from './WeeklyScheduleView';
+import { ComprehensiveEmployeeList } from './ComprehensiveEmployeeList';
 import { 
   Users, 
   Plus, 
@@ -23,7 +24,8 @@ import {
   Search,
   Filter,
   Eye,
-  CalendarDays
+  CalendarDays,
+  FileText
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -45,7 +47,7 @@ export function AdminPanel({
   isOnline,
   lastSynced
 }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState<'volunteers' | 'assignments' | 'money_counting' | 'overview' | 'schedule'>('volunteers');
+  const [activeTab, setActiveTab] = useState<'volunteers' | 'assignments' | 'money_counting' | 'overview' | 'schedule' | 'employee_list'>('volunteers');
   const [showAssignmentPanel, setShowAssignmentPanel] = useState(false);
   const [editingVolunteer, setEditingVolunteer] = useState<Volunteer | null>(null);
   const [showAddVolunteer, setShowAddVolunteer] = useState(false);
@@ -497,6 +499,17 @@ export function AdminPanel({
               <CalendarDays className="w-4 h-4 inline mr-2" />
               Weekly Schedule
             </button>
+            <button
+              onClick={() => setActiveTab('employee_list')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'employee_list'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FileText className="w-4 h-4 inline mr-2" />
+              Employee Directory
+            </button>
           </nav>
         </div>
       </div>
@@ -636,6 +649,14 @@ export function AdminPanel({
             onVolunteersUpdate={onVolunteersUpdate}
             isOnline={isOnline}
             lastSynced={lastSynced}
+          />
+        )}
+
+        {/* Employee Directory Tab */}
+        {activeTab === 'employee_list' && (
+          <ComprehensiveEmployeeList
+            volunteers={volunteers}
+            shifts={shifts}
           />
         )}
       </div>
