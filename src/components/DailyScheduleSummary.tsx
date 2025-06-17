@@ -196,8 +196,8 @@ export function DailyScheduleSummary({
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Daily Schedule Overview</h1>
           <p className="text-lg text-gray-600 mb-6">Convention Accounts Department • July 11-13, 2025</p>
           
-          {/* Volunteer Search */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8 relative">
+          {/* Volunteer Search - HIGHEST Z-INDEX */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8 relative z-[10000]">
             <div className="max-w-md mx-auto relative">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Find Your Assignment</h2>
               <div className="relative">
@@ -221,9 +221,9 @@ export function DailyScheduleSummary({
                 )}
               </div>
               
-              {/* Search Results Dropdown - FIXED POSITIONING */}
+              {/* Search Results Dropdown - MAXIMUM Z-INDEX TO APPEAR ABOVE EVERYTHING */}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute z-[9999] mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
+                <div className="absolute z-[99999] mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
                   <div className="p-2">
                     <div className="text-xs text-gray-500 px-3 py-2 font-medium">
                       Found {searchResults.length} volunteer{searchResults.length !== 1 ? 's' : ''}
@@ -272,7 +272,7 @@ export function DailyScheduleSummary({
               
               {/* No Results */}
               {showSearchResults && searchResults.length === 0 && searchTerm.trim() && (
-                <div className="absolute z-[9999] mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl p-4">
+                <div className="absolute z-[99999] mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl p-4">
                   <div className="text-center text-gray-500">
                     <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                     <p className="text-sm">No volunteers found matching "{searchTerm}"</p>
@@ -283,8 +283,8 @@ export function DailyScheduleSummary({
             </div>
           </div>
           
-          {/* Date Picker */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+          {/* Date Picker - LOWER Z-INDEX */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8 relative z-[100]">
             <p className="text-gray-700 font-medium mb-4">Please select a date to view assignments:</p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               {days.map(day => (
@@ -307,8 +307,8 @@ export function DailyScheduleSummary({
           </div>
         </div>
 
-        {/* Schedule Summary */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 sm:p-8 mb-8">
+        {/* Schedule Summary - EVEN LOWER Z-INDEX */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 sm:p-8 mb-8 relative z-[50]">
           <div className="border-b border-gray-200 pb-4 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 flex items-center">
               <span className={`w-4 h-4 rounded-full mr-3 ${getDayColor(selectedDate).replace('text-white', '')}`}></span>
