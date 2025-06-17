@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Volunteer, Shift } from '../types';
+import { SearchResultsFormatter } from './SearchResultsFormatter';
 import { 
   Calendar, 
   Clock, 
@@ -82,12 +83,12 @@ export function DailyScheduleSummary({
     ).sort((a, b) => a.lastName.localeCompare(b.lastName));
   };
 
-  // Search volunteers across all days
+  // Search volunteers across all days with enhanced matching
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) return [];
     
     const searchLower = searchTerm.toLowerCase();
-    return volunteers.filter(volunteer => {
+    const results = volunteers.filter(volunteer => {
       const fullName = `${volunteer.firstName} ${volunteer.lastName}`.toLowerCase();
       const firstName = volunteer.firstName.toLowerCase();
       const lastName = volunteer.lastName.toLowerCase();
@@ -95,8 +96,18 @@ export function DailyScheduleSummary({
       return fullName.includes(searchLower) || 
              firstName.includes(searchLower) || 
              lastName.includes(searchLower);
-    }).slice(0, 8); // Limit to 8 results for clean display
-  }, [volunteers, searchTerm]);
+    });
+
+    // Enhanced results with role information for list formatting
+    return results.map(volunteer => ({
+      ...volunteer,
+      searchMatchType: 'name',
+      formattedRoles: volunteer.roles.map(role => ({
+        ...role,
+        formattedDescription: `${role.type.replace('_', ' ')} - ${role.day}${role.shift ? ` (Shift ${getShiftNumberInDay(role.shift)})` : ''}${role.location ? ` at ${role.location}` : ''}${role.boxNumber ? ` - Box #${role.boxNumber}` : ''}`
+      }))
+    })).slice(0, 8); // Limit to 8 results for clean display
+  }, [volunteers, searchTerm, shifts]);
 
   // Get shifts for selected date
   const selectedDayShifts = useMemo(() => {
@@ -196,7 +207,7 @@ export function DailyScheduleSummary({
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Daily Schedule Overview</h1>
           <p className="text-lg text-gray-600 mb-6">Convention Accounts Department • July 11-13, 2025</p>
           
-          {/* Volunteer Search - FIXED Z-INDEX */}
+          {/* Volunteer Search - ENHANCED WITH LIST FORMATTING */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8 relative">
             <div className="max-w-md mx-auto">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Find Your Assignment</h2>
@@ -221,63 +232,15 @@ export function DailyScheduleSummary({
                 )}
               </div>
               
-              {/* Search Results Dropdown - FIXED WITH HIGH Z-INDEX */}
-              {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute z-[9999] mt-2 w-full max-w-md left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
-                  <div className="p-2">
-                    <div className="text-xs text-gray-500 px-3 py-2 font-medium">
-                      Found {searchResults.length} volunteer{searchResults.length !== 1 ? 's' : ''}
-                    </div>
-                    {searchResults.map(volunteer => {
-                      const primaryRole = volunteer.roles[0];
-                      return (
-                        <button
-                          key={volunteer.id}
-                          onClick={() => handleSearchSelect(volunteer)}
-                          className="w-full text-left p-3 hover:bg-teal-50 rounded-lg transition-colors group"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-white font-bold text-sm">
-                                {volunteer.firstName[0]}{volunteer.lastName[0]}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-gray-900 group-hover:text-teal-700 truncate">
-                                {volunteer.firstName} {volunteer.lastName}
-                              </div>
-                              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  volunteer.gender === 'male' 
-                                    ? 'bg-blue-100 text-blue-800' 
-                                    : 'bg-pink-100 text-pink-800'
-                                }`}>
-                                  {volunteer.gender === 'male' ? 'Brother' : 'Sister'}
-                                </span>
-                                {primaryRole && (
-                                  <span className="text-xs text-gray-500">
-                                    {primaryRole.type.replace('_', ' ')} • {primaryRole.day}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-teal-600" />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              
-              {/* No Results - FIXED WITH HIGH Z-INDEX */}
-              {showSearchResults && searchResults.length === 0 && searchTerm.trim() && (
-                <div className="absolute z-[9999] mt-2 w-full max-w-md left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-xl shadow-2xl p-4">
-                  <div className="text-center text-gray-500">
-                    <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                    <p className="text-sm">No volunteers found matching "{searchTerm}"</p>
-                    <p className="text-xs mt-1">Try checking the spelling or use a different name</p>
-                  </div>
+              {/* Enhanced Search Results with List Formatting */}
+              {showSearchResults && (
+                <div className="absolute z-[9999] mt-2 w-full max-w-md left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-96 overflow-hidden">
+                  <SearchResultsFormatter
+                    searchResults={searchResults}
+                    searchTerm={searchTerm}
+                    onResultSelect={handleSearchSelect}
+                    className="max-h-96 overflow-y-auto"
+                  />
                 </div>
               )}
             </div>
